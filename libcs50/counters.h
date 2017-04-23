@@ -1,20 +1,23 @@
-/* 
- * counters.h - header file for CS50 counters module
+/*
+ * counters.h - header file for CS50 'counters' module
  *
- * A "counter set" is a set of counters, each distinguished by an integer key.
- * It's a set - each key can only occur once in the set - but instead of
- * storing (key,item) pairs, it tracks a counter for each key.  It starts
- * empty. Each time `counters_add` is called on a given key, that key's
- * counter is incremented. The current counter value can be retrieved by
- * asking for the relevant key.
- * 
- * David Kotz, April 2016, 2017
+ * based on bag.c by David Kotz, April 2016, 2017
+ *
+ * A ‘counter set’ is a set of counters, each distinguished by an integer key.
+ * A key can only occur once in the set - no duplicates.
+ * The set tracks a counter for each key (it does not store (key, item) pairs).
+ * The counters begins empty. Each time counters_add is called on a given key,
+ * the key's counter is incremented.
+ * The current counter value can be retrieved by asking for the right key. 
+ *
+ * Savannah Liu, April 2017
  */
 
-#ifndef __COUNTERS_H
-#define __COUNTERS_H
+#ifndef __counters_H
+#define __counters_H
 
 #include <stdio.h>
+#include <stdbool.h>
 
 /**************** global types ****************/
 typedef struct counters counters_t;  // opaque to users of the module
@@ -35,9 +38,8 @@ void counters_add(counters_t *ctrs, const int key);
  */
 int counters_get(counters_t *ctrs, const int key);
 
-/* Set the current value of counter associated with the given key.
- * If the key does not yet exist, create a counter for it and initialize to
- * the given value. Ignore if ctrs is NULL, if key < 0, or count < 0.
+/* Set the current value of counter associated with the given key;
+ * ignore if ctrs is NULL or if key is negative.
  */
 void counters_set(counters_t *ctrs, const int key, int count);
 
@@ -50,10 +52,10 @@ void counters_print(counters_t *ctrs, FILE *fp);
  * call itemfunc for each item, with (arg, key, count).
  * If ctrs==NULL or itemfunc==NULL, do nothing.
  */
-void counters_iterate(counters_t *ctrs, void *arg, 
-		      void (*itemfunc)(void *arg, const int key, int count));
+void counters_iterate(counters_t *ctrs, void *arg,
+                      void (*itemfunc)(void *arg, const int key, int count));
 
 /* Delete the whole counters. ignore NULL ctrs. */
 void counters_delete(counters_t *ctrs);
 
-#endif // __COUNTERS_H
+#endif // __counters_H
