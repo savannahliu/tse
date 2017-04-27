@@ -13,21 +13,23 @@ LIB = libcs50.a
 #               (students, please do not use -DNOSLEEP!)
 # add -DMEMTEST for memory tracking report in indexer
 # (and run `make clean; make` whenever you change this)
-FLAGS = # -DNOSLEEP # -DMEMTEST 
+FLAGS = # -DNOSLEEP # -DMEMTEST
 
 CFLAGS = -Wall -pedantic -std=c11 -ggdb $(FLAGS)
 CC = gcc
 MAKE = make
 
 # Build the library by archiving object files
-$(LIB): $(OBJS)
-	ar cr $(LIB) $(OBJS)
+$(LIB):
+	cp $(LIB)-`uname` $(LIB)
+# $(LIB): $(OBJS)
+#	ar cr $(LIB) $(OBJS)
 
 # Dependencies: object files depend on header files
 bag.o: bag.h
 counters.o: counters.h
 file.o: file.h
-hashtable.o: hashtable.h set.h jhash.h 
+hashtable.o: hashtable.h set.h jhash.h
 jhash.o: jhash.h
 memory.o: memory.h
 set.o: set.h
