@@ -186,7 +186,7 @@ void pagescanner(webpage_t *page, hashtable_t *ht, bag_t *bag){
         }
       }
     }
-    //count_free(result);
+    count_free(result);
   }
 }
 
