@@ -86,7 +86,6 @@ int main (const int argc, char *argv[]) {
     exit(4);
   }
   count_free(filename);
-  //count_free(fileEnding);
 
   // initialize other modules  --------------------------------------------
   crawler(seedURL, pageDirectory, maxDepth);
@@ -187,7 +186,7 @@ void pagescanner(webpage_t *page, hashtable_t *ht, bag_t *bag){
         }
       }
     }
-    count_free(result);
+    //count_free(result);
   }
 }
 
