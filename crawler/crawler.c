@@ -7,7 +7,7 @@
  * an existing directory in which to write downloaded webpages, and
  * maxDepth is a non-negative integer representing the maximum crawl depth
  *
- * for example: crawler http://old-www.cs.dartmouth.edu/index.html ./data/ 2
+ * for example: crawler http://old-www.cs.dartmouth.edu/index.html ./pgDir/ 2
  *
  * Savannah Liu, April 2017
  */
@@ -23,7 +23,6 @@
 #include "hashtable.h"
 #include "webpage.h"
 
-
 const int HT_NUM_SLOTS = 100;
 char * HT_ITEM = "htitem"; // item stored in ht
 
@@ -32,6 +31,7 @@ void crawler(char *seedURL, char *pageDirectory, int maxDepth);
 bool pagefetcher(webpage_t *page);
 void pagesaver(webpage_t *page, int id, char *pageDirectory);
 void pagescanner(webpage_t *page, hashtable_t *ht, bag_t *bag);
+
 
 //static void bagitemprint(FILE *fp, void *item);
 //static void htitemprint(FILE *fp, const char *key, void *item);
@@ -43,8 +43,8 @@ int main (const int argc, char *argv[]) {
   char *progName = argv[0];   // name of this program
   char *seedURL;
   char *pageDirectory;
-  char *fileEnding;            // used for checking pageDirectory
   FILE *fp;                   // used for checling pageDirectory
+  char * fileEnding;          // used for checling pageDirectory
   char *maxDepthString;       // used for checking if maxDepth is int
   int maxDepth;
 
@@ -57,9 +57,6 @@ int main (const int argc, char *argv[]) {
   // correct number of arguments
   seedURL = argv[1];
   pageDirectory = argv[2];
-  char *filename = count_malloc(sizeof(char *));  // used for checking pageDirectory
-  strcpy(filename, pageDirectory); // used for checking pageDirectory
-  maxDepthString = argv[3];
 
   // check URL is internal aka within CS50 playground http://old-www.cs.dartmouth.edu/
   if (IsInternalURL(seedURL) == false){
@@ -67,10 +64,14 @@ int main (const int argc, char *argv[]) {
     exit(2);
   }
 
-  // check pageDirectory exists and is writeable
+  // check pageDirectory exists and is writeable - make a new file called pgDir/.crawler
+  // for strcpy need to allocate space for null char http://stackoverflow.com/questions/27636306/valgrind-address-is-0-bytes-after-a-block-of-size-8-allocd
   fileEnding = ".crawler";
+  size_t length = strlen(fileEnding) + strlen(pageDirectory) + 1; // http://stackoverflow.com/questions/5614411/correct-way-to-malloc-space-for-a-string-and-then-insert-characters-into-that-sp
+  char *filename = count_malloc(sizeof(char *) * length + 1);
+  strcpy(filename, pageDirectory);
   strcat(filename, fileEnding); // concatenate string https://www.tutorialspoint.com/c_standard_library/c_function_strcat.htm
-  // concatenate .crawler onto pageDirectory to make a new filename
+
   fp = fopen(filename, "w");
   if (fp == NULL){
     fprintf(stderr, "usage: %s does not exist or is not writeable\n", pageDirectory);
@@ -79,20 +80,22 @@ int main (const int argc, char *argv[]) {
     fclose(fp); // success. close file
   }
 
+  maxDepthString = argv[3];
   if (sscanf(maxDepthString, "%d", &maxDepth) != 1 || maxDepth < 0) { // maxDepth not integer (char or float)
     fprintf(stderr, "usage: maxDepth must be a non-negative integer\n");
     exit(4);
   }
   count_free(filename);
+  //count_free(fileEnding);
 
   // initialize other modules  --------------------------------------------
   crawler(seedURL, pageDirectory, maxDepth);
+
+  count_report(stdout, "count report! ");
 }
 
-/* Loops over pages to explore until list is exhausted
- * uses bag to traack pages to explore, hashtable tracks pages seen
- * when it explores a page it gives the page URL to the pagefectcher
- * then the result to the pagesaver, then to the pagescanner
+/* Loops over pages to explore until list is exhausted uses bag to track pages to explore, hashtable tracks pages seen
+ * when it explores a page it gives the page URL to the pagefectcher then the result to the pagesaver, then to the pagescanner
 */
 void crawler(char *seedURL, char *pageDirectory, int maxDepth){
   bag_t *bag;   // create bag of webpages to crawl
@@ -124,7 +127,11 @@ void crawler(char *seedURL, char *pageDirectory, int maxDepth){
         pagescanner(page, ht, bag);
       }
     }
+    webpage_delete(page);
   }
+  // delete the bag
+  bag_delete(bag, webpage_delete);
+  hashtable_delete(ht, NULL);
 }
 
 /* fetches the HTML of a page from a URL*/
@@ -134,21 +141,20 @@ bool pagefetcher(webpage_t *page){
 
 //outputs a page to the appropriate file: uses pagefetcher contents
 void pagesaver(webpage_t *page, int id, char *pageDirectory){
-  char *newfile = count_malloc(sizeof(char *));
-  //char *filename = count_malloc(sizeof(char *));  // used for checking pageDirectory
+  char *idString = count_malloc(sizeof(char *));
+  sprintf(idString, "%d", id); // make id a string
+  size_t length = strlen(idString) + strlen(pageDirectory) + 1; // http://stackoverflow.com/questions/5614411/correct-way-to-malloc-space-for-a-string-and-then-insert-characters-into-that-sp
+  char *newfile = count_malloc(sizeof(char *) * length + 1);
   strcpy(newfile, pageDirectory); // used for checking pageDirectory
-
-  //newfile = "hello";
-  //strcat(filename, fileEnding); // concatenate string https://www.tutorialspoint.com/c_standard_library/c_function_strcat.htm
-
-  sprintf(newfile, "%s%d", newfile, id); // creates add id to filename by appending to pageDirectory
+  strcat(newfile, idString); // concatenate string https://www.tutorialspoint.com/c_standard_library/c_function_strcat.htm
 
   FILE *fp;
   fp = fopen(newfile, "w");
   fprintf(fp, "%s\n %d\n", webpage_getURL(page), webpage_getDepth(page)); // write URL and depth to the file
   fprintf(fp, "%s", webpage_getHTML(page));
   fclose(fp); // close the file
-  free(newfile);
+  count_free(newfile);
+  count_free(idString);
 
 /*
   sprintf(pageDirectory, "%s%d", pageDirectory, id); // creates add id to filename by appending to pageDirectory
@@ -181,7 +187,7 @@ void pagescanner(webpage_t *page, hashtable_t *ht, bag_t *bag){
         }
       }
     }
-    free(result);
+    count_free(result);
   }
 }
 
