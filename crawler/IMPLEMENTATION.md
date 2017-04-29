@@ -1,61 +1,22 @@
-Crawler Implementation Spec  - see lab 3 instructions as guide
+# CS50 Tiny Search Engine (TSE) Crawler Implementation Spec
 
-Detailed pseudo code for each of the objects/components/functions,
-main function:
-Pseudo code for logic/algorithmic flow
+Savannah Liu, April 2017.
 
-The crawler will run as follows:
+### Implementation
 
-execute from a command line as shown in the User Interface
+We implement this crawler with a `main` function that parses the command line, validates parameters.
+It makes sure there is the correct number of parameters. Then it checks if each parameter is correct: seedURL is checked to be internal with `IsInternalURL`, pageDirectory is checked to see if it exists and is writeable, and maxDepth must be a non-negative int. Then `main` calls a `crawler` function that does the actual work.
 
-main() function:
-The main function first parses the command line and validates the parameters.
-It makes sure there is the correct number of parameters.
-Then it checks if each parameter is correct: seedURL must be internal,
-pageDirectory must exist and be writeable, and maxDepth must be a non-negative int.
+The `crawler` function initializes modules *hashtable* and *bag*. The hashtable holds the urls that we have already
+visited to prevent us from visiting them again, and bag holds webpages we still need to explore. It makes a webpage for the seedURL, marked with depth=0, and adds that webpage to the bag of webpages to crawl. It also add that URL to the hashtable of URLs seen. Then there is a while loop that loops while there are more webpages we can extract from the bag. In this loop we extract a webpage (URL, depth) from the bag and calls `pagefetcher` to get a page for the extracted URL. It then calls `pagesaver`to write the webpage to the pageDirectory with a unique document ID.
+If the webpage depth is < maxDepth, explore the webpage to find links. It calls `pagescanner` to parse the webpage to extract all its embedded URLs and processes them. The last things `crawler` does it delete the webpages, bag, and hashtable.
 
+The `pagefetcher` function just calls webpage_fetch() on the page passed to it. This function is called by `crawler`.
 
-It then initialize other modules, bag and hashtable.
+The `pagesaver` outputs a page to a file in the pageDirectory. The filename is an int, which is passed to `pagesaver` from the `crawler` function.
 
+The `pagescanner` parses the webpage to extract all its embedded URLs. It extracts each URL using webpage_getNextURL(). For each extracted URL it ‘normalizes’ the URL using NormalizeURL(). It also
+ignores URLs that are considered not ‘internal’ by IsInternalURL(). It then uses hashtable_insert() to try to insert that URL into the hashtable of URLs seen. If hashtable_insert() did not add it to the table, that means it is already there so `pagescanner` does not do anything further with this URL. However, if it was added to the table,
+make a new webpage for that URL using webpage_new(), at depth+1. It then adds the new webpage to the bag of webpages to be crawled.
 
-make a webpage for the seedURL, marked with depth=0
-add that page to the bag of webpages to crawl
-add that URL to the hashtable of URLs seen
-
--------- 
-
-while there are more webpages to crawl,
-extract a webpage (URL,depth) item from the bag of webpages to be crawled,
-pause for at least one second,
-use pagefetcher to retrieve a webpage for that URL,
-use pagesaver to write the webpage to the pageDirectory with a unique document ID, as described in the Requirements.
-if the webpage depth is < maxDepth, explore the webpage to find links:
-use pagescanner to parse the webpage to extract all its embedded URLs;
-for each extracted URL,
-‘normalize’ the URL (see below)
-if that URL is not ‘internal’ (see below), ignore it;
-try to insert that URL into the hashtable of URLs seen
-if it was already in the table, do nothing;
-if it was added to the table,
-make a new webpage for that URL, at depth+1
-add the new webpage to the bag of webpages to be crawled
-
-
-Definition of detailed APIs, interfaces, function prototypes and their parameters,
-
-
-
-Data structures (e.g., struct names and members),
-Bag
-Hashtable
-
-
-
-Error handling and recovery,
-
-
-Resource management,??
-
-
-
-Persistant storage (files, database, etc).
+The `logr` function that turns on print statements that appear inside crawler while it is processing URLs. These statements print a URL, its depth, and whether it was fetched, saved, scanned, found, ignored because it is a duplicate or external URL, or added. 
