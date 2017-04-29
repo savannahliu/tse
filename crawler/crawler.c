@@ -12,6 +12,8 @@
  * Savannah Liu, April 2017
  */
 
+#define DEBUG
+
 #include <stdio.h>
 #include <ctype.h> // used for isdigit
 #include <stdlib.h>
@@ -31,10 +33,7 @@ void crawler(char *seedURL, char *pageDirectory, int maxDepth);
 bool pagefetcher(webpage_t *page);
 void pagesaver(webpage_t *page, int id, char *pageDirectory);
 void pagescanner(webpage_t *page, hashtable_t *ht, bag_t *bag);
-
-
-//static void bagitemprint(FILE *fp, void *item);
-//static void htitemprint(FILE *fp, const char *key, void *item);
+inline static void logr(const char *word, const int depth, const char *url);
 
 /* main function
 * parses arguments and initializes other modules
@@ -87,10 +86,7 @@ int main (const int argc, char *argv[]) {
   }
   count_free(filename);
 
-  // initialize other modules  --------------------------------------------
   crawler(seedURL, pageDirectory, maxDepth);
-
-  count_report(stdout, "count report! ");
 }
 
 /* Loops over pages to explore until list is exhausted uses bag to track pages to explore, hashtable tracks pages seen
@@ -120,7 +116,11 @@ void crawler(char *seedURL, char *pageDirectory, int maxDepth){
   while ((page = bag_extract(bag)) != NULL) { // while bag is not empty: there are more webpages to crawl
 
     if (pagefetcher(page) == true) { // pause for a second & use pagefetcher to get a webpage for the URL
+      logr("Fetched", webpage_getDepth(page), webpage_getURL(page));
+
       pagesaver(page, id, pageDirectory); // write webpage to pageDirectory with unique doc id
+      logr("Saved", webpage_getDepth(page), webpage_getURL(page));
+
       id++; // update id for next document
       if (webpage_getDepth(page) < maxDepth){ // if webpage depth is less than maxdepth, explore the webpage for links
         pagescanner(page, ht, bag);
@@ -128,7 +128,6 @@ void crawler(char *seedURL, char *pageDirectory, int maxDepth){
     }
     webpage_delete(page);
   }
-  // delete the bag
   bag_delete(bag, webpage_delete);
   hashtable_delete(ht, NULL);
 }
@@ -154,20 +153,12 @@ void pagesaver(webpage_t *page, int id, char *pageDirectory){
   fclose(fp); // close the file
   count_free(newfile);
   count_free(idString);
-
-/*
-  sprintf(pageDirectory, "%s%d", pageDirectory, id); // creates add id to filename by appending to pageDirectory
-  FILE *fp;
-  fp = fopen(pageDirectory, "w");
-  fprintf(fp, "%s\n %d\n", webpage_getURL(page), webpage_getDepth(page)); // write URL and depth to the file
-  fprintf(fp, "%s", webpage_getHTML(page));
-  fclose(fp); // close the file
-  */
 }
 
 
 /* extracts URLs from a page and processes each one*/
 void pagescanner(webpage_t *page, hashtable_t *ht, bag_t *bag){
+  logr("Scanning", webpage_getDepth(page), webpage_getURL(page));
   // parse webpage to extract all URLS
   int depth = webpage_getDepth(page);
   depth++;
@@ -176,6 +167,9 @@ void pagescanner(webpage_t *page, hashtable_t *ht, bag_t *bag){
 
   // write the html of the webpage to the file in pageDirectory
   while ((pos = webpage_getNextURL(page, pos, &result)) > 0){ // while you have not run out of HTML
+
+    logr("Found", depth, result); // found a url
+
     // store next URL in the html into result. update position
     if (NormalizeURL(result) == true) { // normalize the url
       if (IsInternalURL(result) == true){ // ignore non-internal links
@@ -183,26 +177,21 @@ void pagescanner(webpage_t *page, hashtable_t *ht, bag_t *bag){
           webpage_t *page; // make a new webpage at depth + 1 if inserted
           page = webpage_new(result, depth, NULL);
           bag_insert(bag, page);
+          logr("Added", depth, result); // added
+        } else {
+          logr("IgnDupl", depth, result); // ignore duplicate
         }
+      } else{ // ignore external url
+        logr("IgnExtrn", depth, result); // ignore duplicate
       }
     }
     count_free(result);
   }
 }
 
-
-// Testing functions -----------------------------------------------------
-
-/*Prints out a webpage bag item (url, depth, html) for testing purposes.
-static void bagitemprint(FILE *fp, void *item){
-  if (fp != NULL && item != NULL)
-    fprintf(fp, "page: url %s, depth %d\n", webpage_getURL(item), webpage_getDepth(item));
+#ifdef DEBUG
+inline static void logr(const char *word, const int depth, const char *url)
+{
+  printf("%2d %*s%9s: %s\n", depth, depth, "", word, url);
 }
-
-Prints out a webpage ht item (url, depth, html) for testing purposes.
-static void htitemprint(FILE *fp, const char *key, void *item){
-  char *string = item;
-  if (fp != NULL && key != NULL && item != NULL)
-  fprintf(fp, "URL key: %s, const string item %s\n", key, string);
-}
-*/
+#endif //DEBUG
