@@ -3,7 +3,7 @@
 # Savannah Liu, April 2017
 L = ../libcs50
 PROG = crawler
-OBJS = crawler.o 
+OBJS = crawler.o
 LIBS = -lcurl
 LLIBS = $L/libcs50.a # local library
 

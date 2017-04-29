@@ -137,8 +137,9 @@ bool pagefetcher(webpage_t *page){
   return webpage_fetch(page);
 }
 
-//outputs a page to the appropriate file: uses pagefetcher contents
+/* outputs a page to the appropriate file: uses pagefetcher contents */
 void pagesaver(webpage_t *page, int id, char *pageDirectory){
+  // make a new filename: in pageDirectory, with an int id 
   char *idString = count_malloc(sizeof(char *));
   sprintf(idString, "%d", id); // make id a string
   size_t length = strlen(idString) + strlen(pageDirectory) + 1; // http://stackoverflow.com/questions/5614411/correct-way-to-malloc-space-for-a-string-and-then-insert-characters-into-that-sp
@@ -156,7 +157,7 @@ void pagesaver(webpage_t *page, int id, char *pageDirectory){
 }
 
 
-/* extracts URLs from a page and processes each one*/
+/* extracts URLs from a page and processes each one */
 void pagescanner(webpage_t *page, hashtable_t *ht, bag_t *bag){
   logr("Scanning", webpage_getDepth(page), webpage_getURL(page));
   // parse webpage to extract all URLS
@@ -189,6 +190,7 @@ void pagescanner(webpage_t *page, hashtable_t *ht, bag_t *bag){
   }
 }
 
+/*Used to print log*/
 #ifdef DEBUG
 inline static void logr(const char *word, const int depth, const char *url)
 {
