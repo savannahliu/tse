@@ -1,6 +1,9 @@
 /* 
  * webpage_internal.h - glue between webpage.c and webpage_fetch.c
  *
+ * DO NOT INCLUDE THIS FILE - it is only for 'internal' use, that is,
+ * between webpage.c and webpage_fetch.c.
+ *
  * David Kotz - April 2017
  *
  */

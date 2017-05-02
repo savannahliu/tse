@@ -54,4 +54,12 @@ void count_free(void *ptr);
 /* report the current malloc/free counts */
 void count_report(FILE *fp, char *message);
 
+/**************** count_net() ****************/
+/* report the current net malloc-free counts;
+ * returns positive if there are unfreed allocations,
+ * returns negative if there were more free's than alloc's (!),
+ * returns zero if they balance.
+ */
+int count_net(void);
+
 #endif // __MEMORY_H

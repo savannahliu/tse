@@ -111,3 +111,15 @@ count_report(FILE *fp, char *message)
   fprintf(fp, "%s: %d malloc, %d free, %d free(NULL), %d net\n", 
 	  message, nmalloc, nfree, nfreenull, nmalloc - nfree - nfreenull);
 }
+
+/**************** count_net() ****************/
+/* report the current net malloc-free counts
+ * returns positive if there are unfreed allocations,
+ * returns negative if there were more free's than alloc's (!),
+ * returns zero if they balance.
+ */
+int
+count_net(void)
+{
+  return nmalloc - nfree - nfreenull;
+}

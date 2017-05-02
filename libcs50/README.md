@@ -12,17 +12,13 @@ The starter kit includes two pre-built libraries:
  * `libcs50.a-Darwin` is for MacOS (may not work on all MacOS versions)
  * `libcs50.a-Linux` is for Linux, built on standard CS50 servers 
 
-If you prefer our data-structure implementation over your own, copy it into place:
-
- * `cp libcs50.a-Darwin libcs50.a`, or
- * `cp libcs50.a-Linux libcs50.a`
-
-Indeed, in that case, you may want to modify the Makefile to replace the rule for `$(LIB)`:
+If you prefer our data-structure implementation over your own, modify the Makefile to replace the rule for `$(LIB)`:
 
 ```
 $(LIB):
 	cp $(LIB)-`uname` $(LIB)
 ```
+Notice that just copies the relevant pre-compiled library to `libcs50.a`.
 
 To clean up, run `make clean`.
 

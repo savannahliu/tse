@@ -26,18 +26,20 @@ char *webpage_getHTML(const webpage_t *page);
 
 /**************** webpage_new ****************/
 /* Allocate and initialize a new webpage_t structure.
- * Do NOT fetch the html from url; Caller can fetch it later with webpage_fetch().
+ * Do NOT fetch the html from url; instead, the
+ * caller can fetch it later with webpage_fetch().
  * Parameters:
- *   url must be non-null; its string is copied. 
+ *   url   must be non-null; its string is copied. 
  *   depth must be non-negative.
- *   html may be null; if not, its string is NOT copied.
- * Return NULL on any error.
+ *   html  may be null; the pointer is copied, but the string is NOT copied.
+ * Returns NULL on any error.
  */
 webpage_t *webpage_new(char *url, const int depth, char *html);
 
 /**************** webpage_delete ****************/
 /* Delete a webpage_t structure created by webpage_new().
  * This function may be called from something like bag_delete().
+ * This function calls free() on both the url and the html, if not NULL.
  */
 void webpage_delete(void *data);
 
