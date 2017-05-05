@@ -125,7 +125,15 @@ create_crawlerfilename(int id, char *pageDirectory)
 void
 index_save(char *indexFilename, index_t index)
 {
+  FILE *fp;
+  fp = fopen(indexFilename, "w");
 
+
+  fprintf(fp, "%s\n %d\n", webpage_getURL(page), webpage_getDepth(page)); // write URL and depth to the file
+  fprintf(fp, "%s", webpage_getHTML(page));
+
+  fclose(fp); // close the file
+  count_free(indexFilename);
 }
 
 /**************** index_delete() ****************/
