@@ -41,26 +41,42 @@ index_build(char* pageDirectory, int num_slots)
   // make a new filename: pageDirectory/id
   int id = 1;
   char *filename = create_crawlerfilename(id, pageDirectory);
+  printf("filename: %s\n", filename);
+
   FILE *file;
 
   while((file = pageloader(filename)) != NULL){ // get files in pageDirectory
+
+    printf("index build while loop\n");
+
     char *url = readlinep(file); // get URL from first line of the file
+
+    printf("url: %s\n", url);
+
     webpage_t *page = webpage_new(url, 0, NULL); // depth doesn't matter
     if (webpage_fetch(page) == false){ // get webpage using url webpage_fetch
       return NULL;  // error fetching page
     }
     int pos = 0;
     char *word;
+
     // get and process each word in the page (insert into index)
     while ((pos = webpage_getNextWord(page, pos, &word)) > 0){
-      word = NormalizeWord(word);
-      if (strlen(word) > 3){  // make sure word is > 3 char and normalized
+      printf("word: %s\n", word);
+      if (strlen(word) > 2){  // make sure word is > 3 char and normalized
+        printf("word length ok - processing word\n");
+        word = NormalizeWord(word);
+        printf("normalized word: %s\n", word);
         process_word(word, ht, id);
       }
     }
     count_free(filename);
+    fclose(file);
     id++; // update filename to next file
     filename = create_crawlerfilename(id, pageDirectory);
+    printf("filename: %s\n", filename);
+
+
   }
 
   index_t *index = count_malloc(sizeof(index_t)); // hide ht data structure - make index struct
@@ -68,8 +84,8 @@ index_build(char* pageDirectory, int num_slots)
     return NULL; // error allocating memory for node; return error
   } else {
     index->ht = ht;
-    return index;
   }
+  return index;
 }
 
 /**************** process_word() ****************/
@@ -84,6 +100,10 @@ process_word(char *word, hashtable_t *ht, int fileid)
     ctrs = hashtable_find(ht, word); // get the existing counter for the word
   }
   counters_add(ctrs, fileid);
+
+  printf("counter: \n");
+  counters_print(ctrs, stdout); // testing
+  printf("\n");
 }
 
 /**************** create_crawlerfilename() ****************/
@@ -94,7 +114,7 @@ static char *
 create_crawlerfilename(int id, char *pageDirectory)
 {
   char *idString = count_malloc(sizeof(char *));
-  sprintf(idString, "%d", id); // make id a string
+  sprintf(idString, "/%d", id); // make id a string
   size_t length = strlen(idString) + strlen(pageDirectory) + 1;
   char *filename = count_malloc(sizeof(char *) * length + 1);
   strcpy(filename, pageDirectory);
@@ -108,6 +128,7 @@ create_crawlerfilename(int id, char *pageDirectory)
 void
 index_save(char *indexFilename, index_t index)
 {
+
 }
 
 /**************** index_delete() ****************/

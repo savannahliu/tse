@@ -50,7 +50,6 @@ pageloader(char *file)
     if (fp == NULL){ // error opening file
       return NULL;
     } else {
-      fclose(fp);
       return fp;
     }
 }

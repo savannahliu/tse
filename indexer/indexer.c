@@ -61,10 +61,11 @@ void
 indexer(char *pageDirectory, char *indexFilename)
 {
   // build index
-  index_build(pageDirectory, INDEX_SIZE);
+  printf("building index\n"); 
+  index_t *index = index_build(pageDirectory, INDEX_SIZE);
 
   // save index in indexFilename
-  // index_save(file, index);
+  // index_save(indexfilename, index);
 
   // clean up data structures
   // delete_index();
