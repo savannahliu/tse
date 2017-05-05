@@ -9,14 +9,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "word.h"
 
 /**************** functions ****************/
 
 /**************** NormalizeWord() ****************/
 /* convert word to lowercase */
-bool
-NormalizeWord(char **word)
+//referenced http://stackoverflow.com/questions/23618316/undefined-reference-to-strlwr
+//referenced http://stackoverflow.com/questions/2661766/c-convert-a-mixed-case-string-to-all-lower-case?noredirect=1&lq=1
+char *
+NormalizeWord(char *word)
 {
-  return true; 
+  while (*word) {
+    *word = tolower(*word);
+    word++;
+  }
+  return word;
 }

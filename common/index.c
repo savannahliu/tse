@@ -23,7 +23,7 @@
 /**************** global types ****************/
 typedef struct index {
   hashtable_t *ht;
-} index_t; 
+} index_t;
 
 /**************** local functions ****************/
 /* not visible outside this file */
@@ -53,7 +53,8 @@ index_build(char* pageDirectory, int num_slots)
     char *word;
     // get and process each word in the page (insert into index)
     while ((pos = webpage_getNextWord(page, pos, &word)) > 0){
-      if ((strlen(word) > 3) && (NormalizeWord(&word) == true)){  // make sure word is > 3 char and normalized
+      word = NormalizeWord(word);
+      if (strlen(word) > 3){  // make sure word is > 3 char and normalized
         process_word(word, ht, id);
       }
     }

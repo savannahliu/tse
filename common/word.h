@@ -17,6 +17,6 @@
 /**************** functions ****************/
 
 /* convert word to lowercase */
-bool NormalizeWord(char **word);
+char* NormalizeWord(char *word);
 
 #endif // __word_H
