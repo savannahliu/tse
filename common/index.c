@@ -44,13 +44,10 @@ index_build(char* pageDirectory, int num_slots)
   printf("filename: %s\n", filename);
 
   FILE *file;
-
   while((file = pageloader(filename)) != NULL){ // get files in pageDirectory
 
-    printf("index build while loop\n");
-
+    //printf("index build while loop\n");
     char *url = readlinep(file); // get URL from first line of the file
-
     printf("url: %s\n", url);
 
     webpage_t *page = webpage_new(url, 0, NULL); // depth doesn't matter
@@ -62,9 +59,9 @@ index_build(char* pageDirectory, int num_slots)
 
     // get and process each word in the page (insert into index)
     while ((pos = webpage_getNextWord(page, pos, &word)) > 0){
-      printf("word: %s\n", word);
+      //printf("word: %s\n", word);
       if (strlen(word) > 2){  // make sure word is > 3 char and normalized
-        printf("word length ok - processing word\n");
+        //printf("word length ok - processing word \n");
         word = NormalizeWord(word);
         printf("normalized word: %s\n", word);
         process_word(word, ht, id);
@@ -101,7 +98,7 @@ process_word(char *word, hashtable_t *ht, int fileid)
   }
   counters_add(ctrs, fileid);
 
-  printf("counter: \n");
+  printf("counter: ");
   counters_print(ctrs, stdout); // testing
   printf("\n");
 }

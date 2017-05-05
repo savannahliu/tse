@@ -11,19 +11,23 @@
 #include <string.h>
 #include <ctype.h>
 #include "word.h"
+#include "memory.h"
 
 /**************** functions ****************/
 
 /**************** NormalizeWord() ****************/
-/* convert word to lowercase */
-//referenced http://stackoverflow.com/questions/23618316/undefined-reference-to-strlwr
-//referenced http://stackoverflow.com/questions/2661766/c-convert-a-mixed-case-string-to-all-lower-case?noredirect=1&lq=1
+/* convert word to lowercase
+* caller is responsible for freeing the string
+* referenced http://stackoverflow.com/questions/12337570/tolower-function-problems
+*/
 char *
 NormalizeWord(char *word)
 {
-  while (*word) {
-    *word = tolower(*word);
-    word++;
+  size_t length = strlen(word);
+  char *result = count_malloc(sizeof(char *) * length + 1); // include room for newline
+  for(int i = 0 ; i < length ; i++) {
+    result[i]=tolower(word[i]);
   }
-  return word;
+  result[length] = '\0';
+  return result;
 }
