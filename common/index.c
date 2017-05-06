@@ -189,7 +189,9 @@ index_load(char *indexFilename)
   hashtable_t *ht = hashtable_new(num_slots); // make hashtable
 
   char *word = count_malloc(sizeof(char *)); // holds word index_load is currently scanning
-  while (fscanf(file, "%s ", word) == 1){ // while not end of file & successfully scan word
+  //while (fscanf(file, "%s ", word) == 1){ // while not end of file & successfully scan word
+
+  while ((word = readwordp(file)) != NULL){ // while not end of file
 
     counters_t *ctrs = counters_new(); // create new counter set for current word
     int docID;
@@ -201,8 +203,9 @@ index_load(char *indexFilename)
     }
 
     hashtable_insert(ht, word, ctrs); // insert counter into ht
+    count_free(word);
   }
-  count_free(word);
+  //count_free(word);
   fclose(file);
 
   index_t *index = count_malloc(sizeof(index_t)); // hide ht data structure - make index struct
