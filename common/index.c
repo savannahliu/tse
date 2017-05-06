@@ -173,3 +173,44 @@ c_delete(void *item)
 {
   counters_delete(item); // pass it a ctrs to delete
 }
+
+/**************** index_load() ****************/
+/* load contents of index file into index data structure */
+index_t *
+index_load(char *indexFilename)
+{
+
+  FILE *file;
+  if ((file = pageloader(indexFilename)) == NULL){ // get indexFile
+    return NULL;
+  }
+
+  int num_slots = lines_in_file(file); // number of slots is number of words: one word per line
+  hashtable_t *ht = hashtable_new(num_slots); // make hashtable
+
+  char *word = count_malloc(sizeof(char *)); // holds word index_load is currently scanning
+  while (fscanf(file, "%s ", word) == 1){ // while not end of file & successfully scan word
+
+    counters_t *ctrs = counters_new(); // create new counter set for current word
+    int docID;
+    int count;
+
+    while (fscanf(file, "%d %d ", &docID, &count) == 2) { // read until end of line
+        counters_add(ctrs, docID); // add docID into counter f or current word
+        counters_set(ctrs, docID , count); // set it to count
+    }
+
+    hashtable_insert(ht, word, ctrs); // insert counter into ht
+  }
+  count_free(word);
+  fclose(file);
+
+  index_t *index = count_malloc(sizeof(index_t)); // hide ht data structure - make index struct
+  if (index == NULL) {
+    return NULL; // error allocating memory for node; return error
+  } else {
+    index->ht = ht;
+  }
+  return index;
+
+}
