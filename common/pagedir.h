@@ -20,7 +20,7 @@
 /* Check if given directory was produced by the crawler. */
 bool isCrawlerDirectory(char *dir);
 
-/* Gives webpage of a file from crawler output pageDirectory */
+/* Gives file, checks to see if readable */
 FILE *pageloader(char *file);
 
 /* Save pages into crawler output directory

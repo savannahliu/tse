@@ -27,7 +27,10 @@ index_t *index_build(char* pageDirectory, int num_slots);
 void index_save(char *indexFilename, index_t *index);
 
 /* deletes index data structure */
-void index_delete(index_t *index, void (*itemdelete)(void *item));
+void index_delete(index_t *index);
+
+/* load contents of index file into index data structure */
+index_t *index_load(char *indexFilename);
 
 
 #endif // __index_H

@@ -44,7 +44,6 @@ index_build(char* pageDirectory, int num_slots)
   // make a new filename: pageDirectory/id
   int id = 1;
   char *filename = create_crawlerfilename(id, pageDirectory);
-  printf("filename: %s\n", filename);
 
   FILE *file;
   while((file = pageloader(filename)) != NULL){ // get files in pageDirectory
@@ -188,10 +187,7 @@ index_load(char *indexFilename)
   int num_slots = lines_in_file(file); // number of slots is number of words: one word per line
   hashtable_t *ht = hashtable_new(num_slots); // make hashtable
 
-  //char *word = count_malloc(sizeof(char *)+1);
   char *word; // holds word index_load is currently scanning
-  //while (fscanf(file, "%s ", word) == 1){ // while not end of file & successfully scan word
-
   while ((word = readwordp(file)) != NULL){ // while not end of file
 
     counters_t *ctrs = counters_new(); // create new counter set for current word
@@ -206,7 +202,6 @@ index_load(char *indexFilename)
     hashtable_insert(ht, word, ctrs); // insert counter into ht
     free(word);
   }
-  //count_free(word);
   fclose(file);
 
   index_t *index = count_malloc(sizeof(index_t)); // hide ht data structure - make index struct

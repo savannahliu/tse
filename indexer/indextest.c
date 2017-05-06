@@ -36,8 +36,9 @@ int main (const int argc, char *argv[]) {
   if (parse_args(progName, oldIndexFilename, newIndexFilename) == true){
     index_t *index = index_load(oldIndexFilename);
     index_save(newIndexFilename, index);
+    index_delete(index);
   }
-  count_report(stdout, "count report: ");
+  //count_report(stdout, "count report: ");
 }
 
 /* parse and validate command line arguments */

@@ -13,7 +13,7 @@
 #include "memory.h"
 #include "webpage.h"
 
-/**************** bag_new() ****************/
+/**************** isCrawlerDirectory() ****************/
 /* Check if given pageDirectory was produced by the crawler. */
 bool
 isCrawlerDirectory(char *pageDirectory)
@@ -42,7 +42,7 @@ isCrawlerDirectory(char *pageDirectory)
 }
 
 /**************** pageloader() ****************/
-/* Gives webpage of a file from crawler output pageDirectory */
+/* Gives file, checks to see if readable */
 FILE *
 pageloader(char *file)
 {

@@ -13,7 +13,7 @@ LIB = common.a
 #               (students, please do not use -DNOSLEEP!)
 # add -DMEMTEST for memory tracking report in indexer
 # (and run `make clean; make` whenever you change this)
-FLAGS = # -DNOSLEEP # -DMEMTEST
+FLAGS =   -DMEMTEST # -DNOSLEEP
 
 CFLAGS = -Wall -pedantic -std=c11 -ggdb $(FLAGS) -I$L
 CC = gcc
