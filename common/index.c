@@ -29,6 +29,8 @@ typedef struct index {
 /* not visible outside this file */
 static void process_word(char *word, hashtable_t *ht, int fileid);
 static char *create_crawlerfilename(int id, char *pageDirectory);
+static void ht_print(void *arg, const char *key, void *item);
+static void ctrs_print(void *arg, const int key, int count);
 
 /**************** functions ****************/
 
@@ -72,7 +74,6 @@ index_build(char* pageDirectory, int num_slots)
     id++; // update filename to next file
     filename = create_crawlerfilename(id, pageDirectory);
     printf("filename: %s\n", filename);
-
 
   }
 
@@ -123,17 +124,36 @@ create_crawlerfilename(int id, char *pageDirectory)
 /**************** index_save() ****************/
 /* save contents of index data structure into file called indexFilename */
 void
-index_save(char *indexFilename, index_t index)
+index_save(char *indexFilename, index_t *index)
 {
   FILE *fp;
   fp = fopen(indexFilename, "w");
-
-
-  fprintf(fp, "%s\n %d\n", webpage_getURL(page), webpage_getDepth(page)); // write URL and depth to the file
-  fprintf(fp, "%s", webpage_getHTML(page));
-
+  hashtable_iterate(index->ht, fp, ht_print); // parameters: ht, file, helper function
   fclose(fp); // close the file
-  count_free(indexFilename);
+}
+
+/**************** ht_print() ****************/
+/* helper function used in index_save
+*  (prints a line in format: word docID count [docID count]...)
+* prints the word, calls ctrs_print to print docID count...
+*/
+static void
+ht_print(void *arg, const char *key, void *item)
+{
+  // prints word to file
+  fprintf(arg, "%s ", key);
+  counters_iterate(item, arg, ctrs_print); // parameters: ctrs, file, helper function
+  fprintf(arg, "\n"); // end of line
+}
+
+/**************** ctrs_print() ****************/
+/* helper function used in in index_save
+* prints docid count ...
+*/
+static void
+ctrs_print(void *arg, const int key, int count)
+{
+  fprintf(arg, "%d %d ", key, count); // docID and count
 }
 
 /**************** index_delete() ****************/

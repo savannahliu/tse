@@ -24,7 +24,7 @@ typedef struct index index_t;  // opaque to users of the module
 index_t *index_build(char* pageDirectory, int num_slots);
 
 /* save contents of index data structure into file called indexFilename */
-void index_save(char *indexFilename, index_t index);
+void index_save(char *indexFilename, index_t *index);
 
 /* deletes index data structure */
 void index_delete(index_t *index, void (*itemdelete)(void *item));
