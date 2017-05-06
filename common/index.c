@@ -188,7 +188,8 @@ index_load(char *indexFilename)
   int num_slots = lines_in_file(file); // number of slots is number of words: one word per line
   hashtable_t *ht = hashtable_new(num_slots); // make hashtable
 
-  char *word = count_malloc(sizeof(char *)); // holds word index_load is currently scanning
+  //char *word = count_malloc(sizeof(char *)+1);
+  char *word; // holds word index_load is currently scanning
   //while (fscanf(file, "%s ", word) == 1){ // while not end of file & successfully scan word
 
   while ((word = readwordp(file)) != NULL){ // while not end of file
@@ -203,7 +204,7 @@ index_load(char *indexFilename)
     }
 
     hashtable_insert(ht, word, ctrs); // insert counter into ht
-    count_free(word);
+    free(word);
   }
   //count_free(word);
   fclose(file);
