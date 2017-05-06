@@ -31,6 +31,7 @@ static void process_word(char *word, hashtable_t *ht, int fileid);
 static char *create_crawlerfilename(int id, char *pageDirectory);
 static void ht_print(void *arg, const char *key, void *item);
 static void ctrs_print(void *arg, const int key, int count);
+static void c_delete(void *item);
 
 /**************** functions ****************/
 
@@ -47,35 +48,35 @@ index_build(char* pageDirectory, int num_slots)
 
   FILE *file;
   while((file = pageloader(filename)) != NULL){ // get files in pageDirectory
-
-    //printf("index build while loop\n");
     char *url = readlinep(file); // get URL from first line of the file
-    printf("url: %s\n", url);
 
     webpage_t *page = webpage_new(url, 0, NULL); // depth doesn't matter
     if (webpage_fetch(page) == false){ // get webpage using url webpage_fetch
       return NULL;  // error fetching page
     }
     int pos = 0;
+    char *notNormalizedWord;
     char *word;
 
     // get and process each word in the page (insert into index)
-    while ((pos = webpage_getNextWord(page, pos, &word)) > 0){
-      //printf("word: %s\n", word);
-      if (strlen(word) > 2){  // make sure word is > 3 char and normalized
-        //printf("word length ok - processing word \n");
-        word = NormalizeWord(word);
-        printf("normalized word: %s\n", word);
+    while ((pos = webpage_getNextWord(page, pos, &notNormalizedWord)) > 0){
+      if (strlen(notNormalizedWord) > 2){  // make sure word is > 3 char and normalized
+        word = NormalizeWord(notNormalizedWord);
         process_word(word, ht, id);
+        count_free(word);
       }
+      free(notNormalizedWord);
     }
     count_free(filename);
+    webpage_delete(page);
+    free(url);
+
     fclose(file);
     id++; // update filename to next file
     filename = create_crawlerfilename(id, pageDirectory);
-    printf("filename: %s\n", filename);
-
+  //  printf("filename: %s\n", filename);
   }
+  count_free(filename);
 
   index_t *index = count_malloc(sizeof(index_t)); // hide ht data structure - make index struct
   if (index == NULL) {
@@ -95,13 +96,10 @@ process_word(char *word, hashtable_t *ht, int fileid)
 {
   counters_t *ctrs = counters_new(); // create new counter set
   if (hashtable_insert(ht, word, ctrs) == false){ // word already exists in index
+    free(ctrs);
     ctrs = hashtable_find(ht, word); // get the existing counter for the word
   }
   counters_add(ctrs, fileid);
-
-  printf("counter: ");
-  counters_print(ctrs, stdout); // testing
-  printf("\n");
 }
 
 /**************** create_crawlerfilename() ****************/
@@ -114,6 +112,7 @@ create_crawlerfilename(int id, char *pageDirectory)
   char *idString = count_malloc(sizeof(char *));
   sprintf(idString, "/%d", id); // make id a string
   size_t length = strlen(idString) + strlen(pageDirectory) + 1;
+
   char *filename = count_malloc(sizeof(char *) * length + 1);
   strcpy(filename, pageDirectory);
   strcat(filename, idString);
@@ -159,6 +158,18 @@ ctrs_print(void *arg, const int key, int count)
 /**************** index_delete() ****************/
 /* deletes index data structure */
 void
-index_delete(index_t *index, void (*itemdelete)(void *item))
+index_delete(index_t *index)
 {
+  hashtable_delete(index->ht, c_delete);
+  count_free(index);
+}
+
+/**************** c_delete() ****************/
+/* helper function used in index_delete
+* deletes counters
+*/
+static void
+c_delete(void *item)
+{
+  counters_delete(item); // pass it a ctrs to delete
 }

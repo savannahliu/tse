@@ -34,6 +34,7 @@ int main (const int argc, char *argv[]) {
   if (parse_args(progName, pageDirectory, indexFilename) == true){
     indexer(pageDirectory, indexFilename);
   }
+  count_report(stdout, "count report: ");
 }
 
 /* parse and validate command line arguments */
@@ -60,13 +61,7 @@ parse_args(char* progName, char *pageDirectory, char *indexFilename)
 void
 indexer(char *pageDirectory, char *indexFilename)
 {
-  // build index
-  printf("building index\n"); 
-  index_t *index = index_build(pageDirectory, INDEX_SIZE);
-
-  // save index in indexFilename
-  // index_save(indexfilename, index);
-
-  // clean up data structures
-  // delete_index();
+  index_t *index = index_build(pageDirectory, INDEX_SIZE);  // build index
+  index_save(indexFilename, index); // save index in indexFilename
+  index_delete(index);   // clean up data structures
 }
