@@ -22,14 +22,14 @@
  * otherwise, return p unchanged.  Works nicely as a pass-through:
  *   thingp = assertp(malloc(sizeof(thing)), "thing");
  */
-void *assertp(void *p, char *message);
+void *assertp(void *p, const char *message);
 
 /**************** count_malloc_assert() ****************/
 /* Like malloc() but track the number of successful allocations,
  * and, if response is NULL, print error and die.
  * Unlike malloc(), it takes a 'message' parameter.
  */
-void *count_malloc_assert(size_t size, char *message);
+void *count_malloc_assert(size_t size, const char *message);
 
 /**************** count_malloc() ****************/
 /* Just like malloc() but track the number of successful allocations */
@@ -40,7 +40,7 @@ void *count_malloc(size_t size);
  * and, if response is NULL, print error and die.
  * Unlike calloc(), it takes a 'message' parameter.
  */
-void *count_calloc_assert(size_t nmemb, size_t size, char *message);
+void *count_calloc_assert(size_t nmemb, size_t size, const char *message);
 
 /**************** count_calloc() ****************/
 /* Just like calloc() but track the number of successful allocations */
@@ -52,7 +52,15 @@ void count_free(void *ptr);
 
 /**************** count_report() ****************/
 /* report the current malloc/free counts */
-void count_report(FILE *fp, char *message);
+void count_report(FILE *fp, const char *message);
+
+/**************** count_net() ****************/
+/* report the current net malloc-free counts;
+ * returns positive if there are unfreed allocations,
+ * returns negative if there were more free's than alloc's (!),
+ * returns zero if they balance.
+ */
+int count_net(void);
 
 /**************** count_net() ****************/
 /* report the current net malloc-free counts;

@@ -52,8 +52,10 @@ bool webpage_fetch(webpage_t *page)
   CURL* curl_handle;		       // curl handle
   CURLcode res;		               // curl response code
 
-  // check page
-  if (page == NULL) { return false; }
+  // check webpage structure - must have URL and not yet have HTML
+  if (page == NULL || page->url == NULL || page->html != NULL) {
+    return false;
+  }
 
   // allocate space for the html, curl will realloc as needed
   page->html = calloc(1, sizeof(char));

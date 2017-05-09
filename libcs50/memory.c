@@ -27,7 +27,7 @@ static int nfreenull = 0;  // number of free(NULL) calls
  * otherwise, return p unchanged.
  */
 void *
-assertp(void *p, char *message)
+assertp(void *p, const char *message)
 {
   if (p == NULL) {
     fprintf(stderr, "MALLOC FAILED: %s\n", message);
@@ -42,7 +42,7 @@ assertp(void *p, char *message)
  * Unlike malloc(), it takes a 'message' parameter.
  */
 void *
-count_malloc_assert(size_t size, char *message)
+count_malloc_assert(size_t size, const char *message)
 {
   void *ptr = assertp(malloc(size), message);
   nmalloc++;
@@ -67,7 +67,7 @@ count_malloc(size_t size)
 /* Just like calloc() but track the number of successful allocations
  */
 void *
-count_calloc_assert(size_t nmemb, size_t size, char *message)
+count_calloc_assert(size_t nmemb, size_t size, const char *message)
 {
   void *ptr = assertp(calloc(nmemb, size), message);
   nmalloc++;
@@ -106,7 +106,7 @@ count_free(void *ptr)
 /* report the current malloc/free counts
  */
 void 
-count_report(FILE *fp, char *message)
+count_report(FILE *fp, const char *message)
 {
   fprintf(fp, "%s: %d malloc, %d free, %d free(NULL), %d net\n", 
 	  message, nmalloc, nfree, nfreenull, nmalloc - nfree - nfreenull);

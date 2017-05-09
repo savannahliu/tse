@@ -45,31 +45,31 @@ void webpage_delete(void *data);
 
 /***************** webpage_fetch ******************************/
 /* retrieve HTML from page->url, store into page->html
- * @page: the webpage struct containing the url to curl
+ * @page: the webpage struct containing the url to fetch
  *
- * Returns true if the curl was successful; otherwise, false. 
- * If the curl succeeded, page->html will contain the content retrieved. 
+ * Returns true if the fetch was successful; otherwise, false. 
+ * If the fetch succeeded, page->html will contain the content retrieved. 
  * Parameter page should have been allocated by the caller, 
  * but the page->html pointer is expected to be NULL. 
  * If this function is successful, a new, null-terminated character
  * buffer will be allocated as page->html. The caller must later free this
- * memory.
+ * memory, typically by calling webpage_delete().
  *
  * Assumptions:
  *     1. page has been allocated by caller
- *     2. page->url contains the url to curl
+ *     2. page->url contains the url to fetch
  *     3. page->html is NULL at call time
  *
  * Usage example:
- * webpage_t* page = webpage_new("http://www.example.com", 0, NULL);
- * if(webpage_fetch(page)) {
- *     char *html = webpage_getHTML(page);
- *     printf("Found html: %s\n", html);
- *     free(html);
- *     webpage_delete(page);
- * }
+ *  webpage_t* page = webpage_new("http://www.example.com", 0, NULL);
+ *  if(webpage_fetch(page)) {
+ *    char *html = webpage_getHTML(page);
+ *    printf("Found html: %s\n", html);
+ *  }
+ *  webpage_delete(page);
+ *
  * Returns:
- *     True: success; caller must later free(webpage_getHTML(page));
+ *     True: success; caller must later free html via webpage_delete(page).
  *     False: some error fetching page.
  */
 bool webpage_fetch(webpage_t *page);
@@ -77,11 +77,28 @@ bool webpage_fetch(webpage_t *page);
 
 /**************** webpage_getNextWord ***********************************/
 /* return the next word from html[pos] into word
+ * @page: pointer to the webpage info
+ * @pos: current position in html buffer
+ * @result: a pointer to character pointer, used to pass the word back out
  *
- * Assumptions:
- *     1. webpage has html
- *     2. don't care about opening/closing tags: ignore anything between <...>
- *     3. if the html is malformed, we don't care: match '<' with next '>'
+ * Returns the current position search so far in html; otherwise, returns < 0.
+ * The page should already exist (not NULL), and contain non-NULL html.
+ * The pos argument should be 0 on the initial call; the new pos is returned.
+ * The result argument should be a NULL pointer.
+ * On successful parse of html, result will contain a newly allocated character
+ * buffer; may be NULL on failed return. The caller is responsible for free'ing
+ * this memory.
+ *
+ * Side effect: the page's html will be compressed to remove white space.
+ *
+ * Usage example: (retrieve all words in a page)
+ * int pos = 0;
+ * char *result;
+ *
+ * while ((pos = webpage_getNextWord(page, pos, &result)) > 0) {
+ *     printf("Found word: %s\n", result);
+ *     free(result);
+ * }
  *
  * Memory contract:
  *     1. inbound, webpage points to an existing struct, with existing html;
@@ -98,8 +115,8 @@ int webpage_getNextWord(webpage_t *page, int pos, char **word);
  * @result: a pointer to character pointer, used to pass the url back out
  *
  * Returns the current position search so far in html; otherwise, returns < 0.
- * The page should already exist (not NULL), and contain non-NULL html and url strings.
- * The pos argument should be 0 on the initial call; a new position is returned.
+ * The page should already exist (not NULL), and contain non-NULL html.
+ * The pos argument should be 0 on the initial call; the new pos is returned.
  * The result argument should be a NULL pointer.
  * On successful parse of html, result will contain a newly allocated character
  * buffer; may be NULL on failed return. The caller is responsible for free'ing
@@ -116,6 +133,10 @@ int webpage_getNextWord(webpage_t *page, int pos, char **word);
  *     free(result);
  * }
  *
+ * Memory contract:
+ *     1. inbound, webpage points to an existing struct, with existing html;
+ *     2. on return, *result points to malloc'd space 
+ *                   and the caller is responsible for freeing that space.
  */
 
 int webpage_getNextURL(webpage_t *page, int pos, char **result);

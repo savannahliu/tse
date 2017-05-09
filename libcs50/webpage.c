@@ -104,6 +104,10 @@ webpage_delete(void *data)
  *     6. copy the word into the new buffer
  *     7. return first position past end of word
  * 
+ * Assumptions:
+ *     1. webpage has html
+ *     2. don't care about opening/closing tags: ignore anything between <...>
+ *     3. if the html is malformed, we don't care: match '<' with next '>'
  */
 int 
 webpage_getNextWord(webpage_t *page, int pos, char **word)
