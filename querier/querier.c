@@ -73,34 +73,25 @@ querier(char *pageDirectory, char *indexFilename)
   //while (feof(stdin) == 0){
   char *query;
   while((query = readlinep(stdin)) != NULL){   // read line, need to free this later
-    //printf("%s\n", query);
 
     if (blank_query(query) == false){ // proceed only if this query is not blank. if blank, ignore this query
 
       // calculate the max possible number of words (every character is separated by a space)
       // +1 because int division truncates towards zero
       int possiblewords = (strlen(query)/2) + 1;
-      printf("possible words: %d \n", possiblewords);
-      //char *words[] = count_malloc(possiblewords * sizeof(char *) + 1); // allocate memory for array of words, +1 to leave space for newline
+      //printf("possible words: %d \n", possiblewords);
+
       char **words = count_malloc(possiblewords * sizeof(char *) + 1); // allocate memory for array of words, +1 to leave space for newline
 
       int wordCount = tokenize_query(query, words); // clean and parse query
-      printf("words in array: '%d'\n", wordCount);
 
-
-      printf("new n improved query: ");
-      for (int k=0; k < wordCount; k++){ //testing: print array
-        printf("%s ", words[k]);
+      if(wordCount > 0){      // if it was not a bad query print cleaned query 
+        printf("clean query: ");
+        for (int k=0; k < wordCount; k++){ //testing: print array
+          printf("%s ", words[k]);
+        }
+        printf("\n");
       }
-      printf("\n");
-      
-      /*
-      printf("tokenized query: ");
-      for (int i=0; i<wordCount; i++){ //testing: print array
-        printf("'%s' ", words[i]);
-      }
-      printf("\n");
-      */
 
     }
 
@@ -114,27 +105,19 @@ querier(char *pageDirectory, char *indexFilename)
 /* checks if the query is just whitespace, used in querier */
 static bool
 blank_query(char *query){
-  //printf("blank query\n");
-  //printf("query: %s\n", query);
   int i=0;
   while (query[i] != '\0'){
-    //printf("single char: %c\n", query[i]);
-
     if (isspace(query[i]) == 0){ // 0: there is a non-space char. not a blank line
-      //printf("false\n");
       return false;
     }
-
     i++;
   }
-  //printf("true\n");
   return true; // went through entire string and only found whitespace
 }
 
 /* parses and cleans string query and populates an array of words using words in the string*/
 // in array of words, each slot will contain pointer to a word
 static int tokenize_query(char *query, char *words[]){
-  printf("tokenize query\n");
 
   bool newWord = true;
   int i=0;    // query string index
@@ -149,47 +132,33 @@ static int tokenize_query(char *query, char *words[]){
   while( query[i] != '\0'){   // while not end of query
     if ((isspace(query[i]) == 0) && (isalpha(query[i]) == 0)){ // illegal character: not whitespace, not letter
       fprintf(stderr, "Error: bad character '%c' in query.\n", query[i]);
-      exit(4);
+      return 0;
     }
 
     query[i] = tolower(query[i]); // normalize: convert to lowercase
-    printf("current char: %c\n", query[i]);
+    //printf("current char: %c\n", query[i]);
 
     if (newWord == true){     // looking for a new word
-      printf("new word\n");
+      //printf("new word\n");
 
       if (isalpha(query[i]) != 0 ){  // it's a letter
 
         word = &(query[i]);  // pointer to the word
         rest = &(query[i]);     // pointer to the last read letter (end of word, as of now)
-
-        //word = query[i];  // pointer to the word
-//        rest = query[i];     // pointer to the last read letter (end of word, as of now)
-
         newWord = false;      // we are no longer looking for the beginning of a word
       }
     } else { // not done reading a word
-      //*rest = query[i]; // move query to current spot in string
-    //  rest = &query[i]; // move query to current spot in string
-
       rest = &(query[i]);
-
-      //  rest = query[i];
 
       if (isspace(*rest) != 0){ // its a space, which means the end of the word
         *rest = '\0';
-
-        printf("in isspace 175\n ");
-        //query[i] = '\0'; // put a null here
-
         words[j] = word; // put the pointer to the word into the words array
-        printf("current word in array: %s\n", words[j]);
+        //printf("current word in array: %s\n", words[j]);
 
         j++;             // increment index for words array
         wordCount++;
         newWord = true;
       }
-
     }
 
     i++; // increment index for query string
@@ -213,16 +182,3 @@ static int tokenize_query(char *query, char *words[]){
 
   return wordCount;
 }
-
-
-/*
-  while(*query != '\0'){ // while not end of query
-    if ( (isspace(*query)!=0) && (isalpha(== 0)) ){ // illegal character: not whitespace, not letter
-      fprintf(stderr, "Error: bad character '%c' in query.", *query);
-    }
-    if (isspace(*query) != 0){ // there is a non-space char. not a blank line
-      return false;
-    }
-    *query++;
-  }
-*/
