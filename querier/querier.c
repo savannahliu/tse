@@ -26,6 +26,7 @@ static bool parse_args(char* progName, char *pageDirectory, char *indexFilename)
 static void querier(char *pageDirectory, char *indexFilename);
 static bool blank_query(char *query);
 static int tokenize_query(char *query, char *words[]);
+static void validate_structure(char *words[], int wordCount);
 
 /* main function */
 int main (const int argc, char *argv[]) {
@@ -85,13 +86,16 @@ querier(char *pageDirectory, char *indexFilename)
 
       int wordCount = tokenize_query(query, words); // clean and parse query
 
-      if(wordCount > 0){      // if it was not a bad query print cleaned query 
+      if(wordCount > 0){      // if it was not a bad query print cleaned query
         printf("clean query: ");
         for (int k=0; k < wordCount; k++){ //testing: print array
           printf("%s ", words[k]);
         }
         printf("\n");
       }
+
+      // validate basic structure of query
+      validate_structure(words, wordCount);
 
     }
 
@@ -171,14 +175,31 @@ static int tokenize_query(char *query, char *words[]){
     words[j] = word;  // add word to array
     wordCount++;
   }
-
-  /*
-  printf("new n improved query: ");
-  for (int k=0; k < wordCount; k++){ //testing: print array
-    printf("%s ", words[k]);
-  }
-  printf("\n");
-*/
-
   return wordCount;
+}
+
+/* validate basic structre of query - 'and' 'or' */
+static void validate_structure(char *words[], int wordCount){
+  int i;
+  for (i=0; i<wordCount; i++){ // loop through words in array
+    int cmpAnd = strcmp(words[i],"and");
+    int cmpOr = strcmp(words[i],"or");
+
+    // strcmp: return value 0 means strings are equal
+    if((cmpAnd == 0) || (cmpOr == 0)){ // current word is 'and' or 'or'
+
+      if(i==0) {  // it cannot be first word in query
+        fprintf(stderr, "Error: '%s' cannot be first\n", words[i]);
+      } else if(i == wordCount-1){ // cannot be last word in query
+        fprintf(stderr, "Error: '%s' cannot be last\n", words[i]);
+      } else{ // not the first or last word
+        // check that adjacent (next) word is not 'and' or 'or'
+        cmpAnd = strcmp(words[i+1],"and");
+        cmpOr = strcmp(words[i+1],"or");
+        if((cmpAnd == 0) || (cmpOr == 0)){
+          fprintf(stderr, "Error: '%s' and '%s' cannot be adjacent\n", words[i], words[i+1]);
+        }
+      }
+    }
+  }
 }
