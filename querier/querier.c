@@ -30,8 +30,8 @@ static bool blank_query(char *query);
 static int tokenize_query(char *query, char *words[]);
 static void validate_structure(char *words[], int wordCount);
 static counters_t* satisfy_query(char *words[], int wordCount, index_t *index);
-static void union_function(counters_t *andsequence, counters_t *query);
-static void union_helper(void *arg, const int key, int count);
+//static void union_function(counters_t *andsequence, counters_t *query);
+//static void union_helper(void *arg, const int key, int count);
 static void satisfy_andseq(counters_t *andsequence, counters_t *word);
 static void intersection(void *arg, const int key, int count);
 static void copy_ctrs(counters_t *andsequence, counters_t *word);
@@ -109,8 +109,8 @@ querier(char *pageDirectory, char *indexFilename)
       validate_structure(words, wordCount); // validate basic structure of query
       counters_t *queryDocs = satisfy_query(words, wordCount, index); // satisfy
 
-      printf("docs satisfying query: \n");
-      counters_print(queryDocs, stdout);
+      //printf("docs satisfying query: \n");
+      //counters_print(queryDocs, stdout);
 
     }
   }
@@ -218,6 +218,15 @@ satisfy_query(char *words[], int wordCount, index_t *index){
   counters_t *andseq;
 
   for(int i=0; i < wordCount; i++){ // for each word in the array
+
+    /*
+    printf("query as of now:\n ");
+    counters_print(query, stdout);
+    printf("\n");
+    */
+
+    printf("\n current word: %s\n", words[i]);
+
     // check if its a literal: 'and' 'or'
     int cmpAnd = strcmp(words[i],"and");
     int cmpOr = strcmp(words[i],"or");
@@ -225,35 +234,66 @@ satisfy_query(char *words[], int wordCount, index_t *index){
     // strcmp: return value 0 means strings are equal
     if(cmpAnd == 0){        // its 'and'
       // do nothing. continue to next word
+      printf("\n word: and\n");
+
     } else if(cmpOr == 0){  // it's 'or'
       // don't do anything with this word.
+      printf("\n word: or, start new andsequence\n");
       newAndseq = true;         // start new andsequence on next word
       counters_delete(andseq);  // delete the current andseq (so that if there is another one, we can start fresh)
-      union_function(andseq, query);// union andseq with query
+      //union_function(andseq, query);// union andseq with query
 
     } else{               // regular word: not 'and' or 'or'
+
+        printf("\n: word: regular word");
+
       if(newAndseq == true){ // start new andsequence
-        counters_t *wordctrs = hashtable_find(ht, words[i]);
+
+        printf("\n new andsequence \n\n");
+
+        counters_t *currentword = hashtable_find(ht, words[i]);
+
+        printf("\n %s ctrs: \n", words[i]);
+        counters_print(currentword, stdout);
+        printf("\n");
+
         andseq = counters_new(); // start with new andseq
         // copy this set into the andseq (so that we don't alter the original in the index)
-        copy_ctrs(andseq, wordctrs);
+        if (currentword != NULL){
+
+          printf("copy %s into andseq\n", words[i]);
+          copy_ctrs(andseq, currentword);
+
+        }
         newAndseq = false;
+
+
       } else{ // continue with current andsequence
         counters_t *currentword = hashtable_find(ht, words[i]);
-        satisfy_andseq(andseq, currentword); // do intersection, updates andsequence ctrs
+        printf("\n continue existing andsequence \n\n");
+        if (currentword != NULL){
+          satisfy_andseq(andseq, currentword); // do intersection, updates andsequence ctrs
+
+          counters_print(andseq, stdout);
+        }
       }
     }
+
+    printf("final andseq: \n");
+    counters_print(andseq, stdout);
+    printf("\n");
+
   }
   // union last andseq with query
   //counters_delete(andseq);  // delete the current andseq (so that if there is another one, we can start fresh)
-  union_function(andseq, query);// union andseq with query
+  //union_function(andseq, query);// union andseq with query
   return query;
 }
 
 /* helper function used in satisfy_query.
 * pass in two counters - one for andsequence and one for query
 * updates query
-*/
+
 static void
 union_function(counters_t *andsequence, counters_t *query){
   struct twocounters *bothctrs = malloc(sizeof(struct twocounters)); // make struct holding both ctrs so both can be passed to iterators
@@ -267,13 +307,15 @@ union_function(counters_t *andsequence, counters_t *query){
 * check to see if docs in andsequence appears in query counter
 * update query by doing a union
 * args: struct with counters, key in andsequence, count in andsequence
-*/
+
 static void
 union_helper(void *arg, const int key, int count){
   struct twocounters *bothctrs = arg;
   int wordCtrsCount = counters_get(bothctrs->otherset, key);
   counters_set(bothctrs->otherset, key, wordCtrsCount+count); // update query with sum of counts
 }
+*/
+
 
 /* helper function used in satisfy_query.
 * pass in two counters - one for andsequence and one for a word
@@ -281,7 +323,7 @@ union_helper(void *arg, const int key, int count){
 */
 static void
 satisfy_andseq(counters_t *andsequence, counters_t *word){
-  struct twocounters *bothctrs; // make struct holding both ctrs so both can be passed to iterators
+  struct twocounters *bothctrs = count_malloc(sizeof(struct twocounters)); // make struct holding both ctrs so both can be passed to iterators
   bothctrs->andsequence = andsequence;
   bothctrs->otherset = word;
   // iterate over the andsequence
@@ -295,12 +337,14 @@ satisfy_andseq(counters_t *andsequence, counters_t *word){
 */
 static void
 intersection(void *arg, const int key, int count){
-  struct twocounters *bothctrs = arg;
+  struct twocounters *bothctrs = count_malloc(sizeof(struct twocounters));
+  bothctrs = arg;
   int wordCtrsCount = counters_get(bothctrs->otherset, key);
   if (wordCtrsCount < count){ // update andsequence with minimum
     counters_set(bothctrs->andsequence, key, wordCtrsCount);
   }
 }
+
 
 /* helper function used in satisfy_query.
 * pass in two counters - one for andsequence and one for a word
@@ -308,11 +352,11 @@ intersection(void *arg, const int key, int count){
 */
 static void
 copy_ctrs(counters_t *andsequence, counters_t *word){
-  struct twocounters *bothctrs; // make struct holding both ctrs so both can be passed to iterators
+  struct twocounters *bothctrs = count_malloc(sizeof(struct twocounters)); // make struct holding both ctrs so both can be passed to iterators
   bothctrs->andsequence = andsequence;
   bothctrs->otherset = word;
   // iterate over the andsequence
-  counters_iterate(andsequence, bothctrs, copy_ctrs_helper); // args: counters_t *ctrs, void * arg, itemfunc
+  counters_iterate(word, bothctrs, copy_ctrs_helper); // args: counters_t *ctrs, void * arg, itemfunc
 }
 
 /* helper function used by copy_ctrs
@@ -322,6 +366,7 @@ copy_ctrs(counters_t *andsequence, counters_t *word){
 static void
 copy_ctrs_helper(void *arg, const int key, int count){
   struct twocounters *bothctrs = arg;
-  int wordCtrsCount = counters_get(bothctrs->otherset, key);
-  counters_set(bothctrs->andsequence, key, wordCtrsCount);
+  //int wordCtrsCount = counters_get(bothctrs->otherset, key);
+  //counters_set(bothctrs->andsequence, key, wordCtrsCount);
+  counters_set(bothctrs->andsequence, key, count);
 }
