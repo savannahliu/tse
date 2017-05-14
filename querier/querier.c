@@ -127,22 +127,31 @@ querier(char *pageDirectory, char *indexFilename)
       counters_print(queryDocs, stdout);
       printf("\n");
 
-      //struct satisfyingdoc **rankedArray; // initialize array
+      //------------ Ranking documents by score: ---------------
 
       int numItems = 0; // will determine array size
       counters_iterate(queryDocs, &numItems, count_docs);
-    //  struct satisfyingdoc *rankedArray = count_malloc(numItems * sizeof(struct satisfyingdoc)); // initialize array
-      struct satisfyingdoc **rankedArray = count_malloc(numItems * sizeof(struct satisfyingdoc));
-      struct satisfyingdoc *doc = count_malloc(sizeof(struct satisfyingdoc));   // initialize doc struct memory
 
-      struct rankingarray *arraystruct = count_malloc(sizeof(struct rankingarray));
+      struct satisfyingdoc **rankedArray = count_malloc(numItems * sizeof(struct satisfyingdoc*)); // array of structs
+      //struct satisfyingdoc *doc = count_malloc(sizeof(struct satisfyingdoc*));   // initialize doc struct memory
+      //struct satisfyingdoc *doc;   // initialize doc struct memory
+
+      struct rankingarray *arraystruct = count_malloc(sizeof(struct rankingarray*));
       arraystruct->array = rankedArray;
       arraystruct->endindex = 0; // start inserting here
-      //arraystruct->doc = struct satisfyingdoc *doc;
-      arraystruct->doc = doc;
+      //arraystruct->doc = doc;
       counters_iterate(queryDocs, arraystruct, insert_docs);
 
-// ----
+      printf("numItems: %d\n", numItems);
+
+      for(int i=0; i<numItems; i++){
+        int score = rankedArray[i]->score; // http://stackoverflow.com/questions/18860123/invalid-type-argument-of©
+        int docID = rankedArray[i]->docID;
+
+        printf("score: %d \n", score);
+        printf("docID: %d \n", docID);
+      }
+  /*
       printf("\nranked documents: \n");
       for(int i=0; i<numItems; i++){
         //int score = rankedArray[i].score;
@@ -150,20 +159,25 @@ querier(char *pageDirectory, char *indexFilename)
         int score = rankedArray[i]->score; // http://stackoverflow.com/questions/18860123/invalid-type-argument-of©
         int docID = rankedArray[i]->docID;
 
+        printf("score: %d \n", score);
+        printf("docID: %d \n", docID);
+
         // make filename
         char *idString = count_malloc(sizeof(char *));
-        sprintf(idString, "%d", docID); // make id a string
+        sprintf(idString, "/%d", docID); // make id a string
         size_t length = strlen(idString) + strlen(pageDirectory) + 1; // http://stackoverflow.com/questions/5614411/correct-way-to-malloc-space-for-a-string-and-then-insert-characters-into-that-sp
         char *newfile = count_malloc(sizeof(char *) * length + 1);
-        strcpy(newfile, pageDirectory); // used for checking pageDirectory
+        strcpy(newfile, pageDirectory);
         strcat(newfile, idString); // concatenate string https://www.tutorialspoint.com/c_standard_library/c_function_strcat.htm
 
-        FILE *fp = fp = fopen(newfile, "r");
+        FILE *fp = fopen(newfile, "r");
         char *url = readlinep(fp); // get URL
         printf("%d %d %s", score, docID, url); // print out result
+        printf("\n");
       }
-      printf("\n");
+      */
 
+      printf("\n");
     }
   }
   //index_delete(index);   // clean up data structures
@@ -387,7 +401,7 @@ copy_ctrs_helper(void *arg, const int key, int count){
   counters_set(bothctrs->andsequence, key, count);
 }
 
-// -------------------------------
+// --------------------------------------------------------------------------------
 
 
 /* count number of items in the counters to determine size of array in counters_rank */
@@ -400,18 +414,22 @@ count_docs(void *arg, const int key, int count){
 /*use insertion sort so that array will be in decreasing order (based on score) */
 void
 insert_docs(void *arg, const int key, int count){ // args: array of structs, key, count
+  printf("inside insert_docs\n");
 
   struct rankingarray *arraystruct = arg;
 
-  //struct satisfyingdoc *doc = count_malloc(sizeof(struct satisfyingdoc));   // make a struct
-  //arraystruct->doc = count_malloc(sizeof(struct satisfyingdoc));   // initialize doc struct memory
-  struct satisfyingdoc *doc = arraystruct->doc;
+  struct satisfyingdoc *doc = count_malloc(sizeof(struct satisfyingdoc*)); // new
+
+  arraystruct->doc = doc;  //new
+  //struct satisfyingdoc *doc = arraystruct->doc;
   doc->docID = key;
   doc->score = count;
 
+  printf("key: %d , score: %d\n ", key, count);
+
   struct satisfyingdoc **array = arraystruct->array;
   int index = arraystruct->endindex; // index starting point
-  int i = arraystruct->endindex; // make copy of index starting point
+  int i = index; // make copy of index starting point
 
   // insertion sort:
   array[i] = doc; // insert at end
@@ -427,5 +445,7 @@ insert_docs(void *arg, const int key, int count){ // args: array of structs, key
     i--;
   }
 
+  printf("index: %d\n",index);
   index++; // update the index where the next item should be inserted (end of array)
+  arraystruct->endindex = index;
 }
