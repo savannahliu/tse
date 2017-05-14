@@ -113,7 +113,7 @@ querier(char *pageDirectory, char *indexFilename)
       int wordCount = tokenize_query(query, words); // clean and parse query
 
       if(wordCount > 0){      // if it was not a bad query print cleaned query
-        printf("clean query: ");
+        printf("Entered: ");
         for (int k=0; k < wordCount; k++){ //testing: print array
           printf("%s ", words[k]);
         }
@@ -123,59 +123,38 @@ querier(char *pageDirectory, char *indexFilename)
       validate_structure(words, wordCount); // validate basic structure of query
       counters_t *queryDocs = satisfy_query(words, wordCount, index); // satisfy
 
-      printf("\ndocs satisfying query: \n");
-      counters_print(queryDocs, stdout);
-      printf("\n");
-
-      //------------ Ranking documents by score: ---------------
-
       int numItems = 0; // will determine array size
-      counters_iterate(queryDocs, &numItems, count_docs);
+      counters_iterate(queryDocs, &numItems, count_docs); // count numItems
 
-      struct satisfyingdoc **rankedArray = count_malloc(numItems * sizeof(struct satisfyingdoc*)); // array of structs
-      //struct satisfyingdoc *doc = count_malloc(sizeof(struct satisfyingdoc*));   // initialize doc struct memory
-      //struct satisfyingdoc *doc;   // initialize doc struct memory
+      if (numItems == 0){
+        printf("No matching documents\n");
+      } else{   //------------ Rank documents by score ---------------
+        struct satisfyingdoc **rankedArray = count_malloc(numItems * sizeof(struct satisfyingdoc*)); // array of structs
+        struct rankingarray *arraystruct = count_malloc(sizeof(struct rankingarray*));
+        arraystruct->array = rankedArray;
+        arraystruct->endindex = 0; // start inserting here
 
-      struct rankingarray *arraystruct = count_malloc(sizeof(struct rankingarray*));
-      arraystruct->array = rankedArray;
-      arraystruct->endindex = 0; // start inserting here
-      //arraystruct->doc = doc;
-      counters_iterate(queryDocs, arraystruct, insert_docs);
+        counters_iterate(queryDocs, arraystruct, insert_docs); // rank documents
 
-      printf("numItems: %d\n", numItems);
+        printf("Matches %d documents (ranked): \n", numItems);
+        for(int i=0; i<numItems; i++){
+          int score = rankedArray[i]->score; // http://stackoverflow.com/questions/18860123/invalid-type-argument-of©
+          int docID = rankedArray[i]->docID;
 
-      for(int i=0; i<numItems; i++){
-        int score = rankedArray[i]->score; // http://stackoverflow.com/questions/18860123/invalid-type-argument-of©
-        int docID = rankedArray[i]->docID;
+          // make filename
+          char *idString = count_malloc(sizeof(char *));
+          sprintf(idString, "/%d", docID); // make id a string
+          size_t length = strlen(idString) + strlen(pageDirectory) + 1; // http://stackoverflow.com/questions/5614411/correct-way-to-malloc-space-for-a-string-and-then-insert-characters-into-that-sp
+          char *newfile = count_malloc(sizeof(char *) * length + 1);
+          strcpy(newfile, pageDirectory);
+          strcat(newfile, idString); // concatenate string https://www.tutorialspoint.com/c_standard_library/c_function_strcat.htm
 
-        printf("score: %d, docID: %d ", score, docID);
-
+          FILE *fp = fopen(newfile, "r");
+          char *url = readlinep(fp); // get URL
+          printf("score %d doc %d: %s", score, docID, url); // print out result
+          printf("\n");
+        }
       }
-  /*
-      printf("\nranked documents: \n");
-      for(int i=0; i<numItems; i++){
-        //int score = rankedArray[i].score;
-        //int docID = rankedArray[i].docID;
-        int score = rankedArray[i]->score; // http://stackoverflow.com/questions/18860123/invalid-type-argument-of©
-        int docID = rankedArray[i]->docID;
-
-        printf("score: %d \n", score);
-        printf("docID: %d \n", docID);
-
-        // make filename
-        char *idString = count_malloc(sizeof(char *));
-        sprintf(idString, "/%d", docID); // make id a string
-        size_t length = strlen(idString) + strlen(pageDirectory) + 1; // http://stackoverflow.com/questions/5614411/correct-way-to-malloc-space-for-a-string-and-then-insert-characters-into-that-sp
-        char *newfile = count_malloc(sizeof(char *) * length + 1);
-        strcpy(newfile, pageDirectory);
-        strcat(newfile, idString); // concatenate string https://www.tutorialspoint.com/c_standard_library/c_function_strcat.htm
-
-        FILE *fp = fopen(newfile, "r");
-        char *url = readlinep(fp); // get URL
-        printf("%d %d %s", score, docID, url); // print out result
-        printf("\n");
-      }
-      */
 
       printf("\n");
     }
@@ -319,7 +298,6 @@ satisfy_query(char *words[], int wordCount, index_t *index){
       }
     }
   }
-  // union last andseq with query
   union_function(andseq, query);// union andseq with query
   //counters_delete(andseq);  // delete the current andseq (so that if there is another one, we can start fresh)
   return query;
@@ -377,7 +355,6 @@ intersection(void *arg, const int key, int count){
   }
 }
 
-
 /* helper function used in satisfy_query.
 * pass in two counters - one for andsequence and one for a word
 * copies a ctrs into andsequence to start new andsequence (so that we don't alter original ctrs in index)
@@ -403,7 +380,6 @@ copy_ctrs_helper(void *arg, const int key, int count){
 
 // --------------------------------------------------------------------------------
 
-
 /* count number of items in the counters to determine size of array in counters_rank */
 static void
 count_docs(void *arg, const int key, int count){
@@ -416,19 +392,15 @@ count_docs(void *arg, const int key, int count){
 /*use insertion sort so that array will be in decreasing order (based on score) */
 void
 insert_docs(void *arg, const int key, int count){ // args: array of structs, key, count
-  printf("inside insert_docs\n");
 
   if (count > 0) {
     struct rankingarray *arraystruct = arg;
-
     struct satisfyingdoc *doc = count_malloc(sizeof(struct satisfyingdoc*)); // new
 
     arraystruct->doc = doc;  //new
     //struct satisfyingdoc *doc = arraystruct->doc;
     doc->docID = key;
     doc->score = count;
-
-    printf("key: %d , score: %d\n ", doc->docID, doc->score);
 
     struct satisfyingdoc **array = arraystruct->array;
     int index = arraystruct->endindex; // index starting point
@@ -440,29 +412,10 @@ insert_docs(void *arg, const int key, int count){ // args: array of structs, key
 
     // repeatedly compare with item on its left until reach the beginning of array or inserted:
     while (i > 0 && (temp->score > array[i-1]->score)){ // current item's score is greater than score of item on its left
-      printf("temp score: %d \n", temp->score);
-      printf("left score: array %d \n", array[i-1]->score);
-
       array[i] = array[i-1]; // slide over left item to current spot
       i--; // update index: go left
     }
     array[i] = temp; // insert item: current item's score is less than one on its left or reached index 0
-
-/*
-    while (i > 0 && ){
-      printf("temp score: %d \n", temp->score);
-      printf("left score: array %d \n", array[i-1]->score)
-
-      if(temp->score > array[i-1]->score){ // current item's score is greater than score of item on its left
-        array[i] = array[i-1]; // slide over left item to current spot
-      } else{ // current item's score is less than one on its left
-        array[i] = temp; // insert item
-      }
-      i--;
-    }
-    */
-
-    printf("index: %d\n\n",index);
     index++; // update the index where the next item should be inserted (end of array)
     arraystruct->endindex = index;
   }
