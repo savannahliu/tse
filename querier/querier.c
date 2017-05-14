@@ -28,7 +28,7 @@ static bool parse_args(char* progName, char *pageDirectory, char *indexFilename)
 static void querier(char *pageDirectory, char *indexFilename);
 static bool blank_query(char *query);
 static int tokenize_query(char *query, char *words[]);
-static void validate_structure(char *words[], int wordCount);
+static bool validate_structure(char *words[], int wordCount);
 static counters_t* satisfy_query(char *words[], int wordCount, index_t *index);
 static void union_function(counters_t *andsequence, counters_t *query);
 static void union_helper(void *arg, const int key, int count);
@@ -120,52 +120,55 @@ querier(char *pageDirectory, char *indexFilename)
         printf("\n");
       }
 
-      validate_structure(words, wordCount); // validate basic structure of query
-      counters_t *queryDocs = satisfy_query(words, wordCount, index); // satisfy
+      bool structureOk = validate_structure(words, wordCount); // validate basic structure of query
+      if (structureOk == true){ // only continue processing this query if structure is sound, otherwise wait for next query
 
-      int numItems = 0; // will determine array size
-      counters_iterate(queryDocs, &numItems, count_docs); // count numItems
+        counters_t *queryDocs = satisfy_query(words, wordCount, index); // satisfy
 
-      if (numItems == 0){
-        printf("No matching documents\n");
-      } else{   //------------ Rank documents by score ---------------
-        struct satisfyingdoc **rankedArray = count_malloc(numItems * sizeof(struct satisfyingdoc*)); // array of structs
-        struct rankingarray *arraystruct = count_malloc(sizeof(struct rankingarray));
-        arraystruct->array = rankedArray;
-        arraystruct->endindex = 0; // start inserting here
+        int numItems = 0; // will determine array size
+        counters_iterate(queryDocs, &numItems, count_docs); // count numItems
 
-        counters_iterate(queryDocs, arraystruct, insert_docs); // rank documents
+        if (numItems == 0){
+          printf("No matching documents\n");
+        } else{   //------------ Rank documents by score ---------------
+          struct satisfyingdoc **rankedArray = count_malloc(numItems * sizeof(struct satisfyingdoc*)); // array of structs
+          struct rankingarray *arraystruct = count_malloc(sizeof(struct rankingarray));
+          arraystruct->array = rankedArray;
+          arraystruct->endindex = 0; // start inserting here
 
-        printf("Matches %d documents (ranked): \n", numItems);
-        for(int i=0; i<numItems; i++){
-          int score = rankedArray[i]->score; // http://stackoverflow.com/questions/18860123/invalid-type-argument-of©
-          int docID = rankedArray[i]->docID;
+          counters_iterate(queryDocs, arraystruct, insert_docs); // rank documents
 
-          // make filename
-          char *idString = count_malloc(sizeof(char *));
-          sprintf(idString, "/%d", docID); // make id a string
-          size_t length = strlen(idString) + strlen(pageDirectory) + 1; // http://stackoverflow.com/questions/5614411/correct-way-to-malloc-space-for-a-string-and-then-insert-characters-into-that-sp
-          char *newfile = count_malloc(sizeof(char *) * length + 1);
-          strcpy(newfile, pageDirectory);
-          strcat(newfile, idString); // concatenate string https://www.tutorialspoint.com/c_standard_library/c_function_strcat.htm
+          printf("Matches %d documents (ranked): \n", numItems);
+          for(int i=0; i<numItems; i++){
+            int score = rankedArray[i]->score; // http://stackoverflow.com/questions/18860123/invalid-type-argument-of©
+            int docID = rankedArray[i]->docID;
 
-          FILE *fp = fopen(newfile, "r");
-          char *url = readlinep(fp); // get URL
-          printf("score %d doc %d: %s", score, docID, url); // print out result
-          printf("\n");
+            // make filename
+            char *idString = count_malloc(sizeof(char *));
+            sprintf(idString, "/%d", docID); // make id a string
+            size_t length = strlen(idString) + strlen(pageDirectory) + 1; // http://stackoverflow.com/questions/5614411/correct-way-to-malloc-space-for-a-string-and-then-insert-characters-into-that-sp
+            char *newfile = count_malloc(sizeof(char *) * length + 1);
+            strcpy(newfile, pageDirectory);
+            strcat(newfile, idString); // concatenate string https://www.tutorialspoint.com/c_standard_library/c_function_strcat.htm
 
-          count_free(idString);
-          count_free(newfile);
-          count_free(url);
-          count_free(rankedArray[i]); // free the doc struct
+            FILE *fp = fopen(newfile, "r");
+            char *url = readlinep(fp); // get URL
+            printf("score %d doc %d: %s", score, docID, url); // print out result
+            printf("\n");
+
+            count_free(idString);
+            count_free(newfile);
+            count_free(url);
+            count_free(rankedArray[i]); // free the doc struct
+          }
+
+          count_free(arraystruct);
+          count_free(rankedArray);
         }
-
-        count_free(arraystruct);
-        count_free(rankedArray);
+        printf("\n");
+        count_free(words); // free words array
+        counters_delete(queryDocs); // free counter
       }
-      printf("\n");
-      count_free(words); // free words array
-      counters_delete(queryDocs); // free counter
 
     }
     count_free(query); // free readlinep
@@ -236,7 +239,7 @@ tokenize_query(char *query, char *words[]){
 
 /* validate basic structre of query - 'and' 'or'
 used in querier */
-static void
+static bool
 validate_structure(char *words[], int wordCount){
   int i;
   for (i=0; i<wordCount; i++){ // loop through words in array
@@ -248,18 +251,22 @@ validate_structure(char *words[], int wordCount){
 
       if(i==0) {  // it cannot be first word in query
         fprintf(stderr, "Error: '%s' cannot be first\n", words[i]);
+        return false;
       } else if(i == wordCount-1){ // cannot be last word in query
         fprintf(stderr, "Error: '%s' cannot be last\n", words[i]);
+        return false;
       } else{ // not the first or last word
         // check that adjacent (next) word is not 'and' or 'or'
         cmpAnd = strcmp(words[i+1],"and");
         cmpOr = strcmp(words[i+1],"or");
         if((cmpAnd == 0) || (cmpOr == 0)){
           fprintf(stderr, "Error: '%s' and '%s' cannot be adjacent\n", words[i], words[i+1]);
+          return false;
         }
       }
     }
   }
+  return true;
 }
 
 // -------------------------------
