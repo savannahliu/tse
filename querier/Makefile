@@ -18,7 +18,7 @@ MAKE = make
 
 # for memory-leak tests
 VALGRIND = valgrind --leak-check=full
-TEST_CRAWLERDIR = /net/class/cs50/demo/crawler-output/cs50/depth0
+TEST_CRAWLERDIR = ../crawler/crawler-output/wikipedia/depth1
 TEST_INDEXFILE = ../indexer/indexfile
 
 .PHONY: all clean
@@ -26,21 +26,18 @@ TEST_INDEXFILE = ../indexer/indexfile
 all: $(PROG)
 
 # object files depend on include files
-querier.o: $L/file.h $L/memory.h $C/pagedir.h $C/index.h
+querier.o: $L/file.h $L/memory.h $L/counters.h $L/hashtable.h $C/pagedir.h $C/index.h
 
 $(PROG): $(OBJS) $(LLIBS)
 	$(CC) $(CFLAGS) $(OBJS) $(LLIBS) $(LIBS) -o $(PROG)
 
 ################## bash script test ##################
-#test: querier queriertest.sh
-	#./querertest.sh
-
-test: querier
-	./querier $(TEST_CRAWLERDIR) $(TEST_INDEXFILE)
+test: querier testquery.sh
+	./testquery.sh
 
 ###################### valgrind ######################
 valgrind: querier
-	$(VALGRIND) ./querier $(TEST_CRAWLERDIR) $(TEST_INDEXFILE)
+	$(VALGRIND) ./querier $(TEST_CRAWLERDIR) $(TEST_INDEXFILE) < testinput2.txt
 
 
 clean:

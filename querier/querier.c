@@ -36,10 +36,6 @@ static void satisfy_andseq(counters_t *andsequence, counters_t *word);
 static void intersection(void *arg, const int key, int count);
 static void copy_ctrs(counters_t *andsequence, counters_t *word);
 static void copy_ctrs_helper(void *arg, const int key, int count);
-
-//void counters_rank(counters_t *querydocs, struct satisfyingdoc *rankedArray);
-
-//static int counters_rank(counters_t *querydocs);
 static void count_docs(void *arg, const int key, int count);
 static void insert_docs(void *arg, const int key, int count);
 
@@ -74,7 +70,6 @@ int main (const int argc, char *argv[]) {
   if (parse_args(progName, pageDirectory, indexFilename) == true){
     querier(pageDirectory, indexFilename);
   }
-  //count_report(stdout, "count report: ");
 }
 
 /* parse and validate command line arguments */
@@ -170,8 +165,6 @@ querier(char *pageDirectory, char *indexFilename)
         }
       }
 
-
-
     }
     count_free(query); // free readlinep
   }
@@ -239,7 +232,7 @@ tokenize_query(char *query, char *words[]){
   return wordCount;
 }
 
-/* validate basic structre of query - 'and' 'or'
+/* validate basic structure of query - 'and' 'or'
 used in querier */
 static bool
 validate_structure(char *words[], int wordCount){
@@ -405,7 +398,7 @@ copy_ctrs_helper(void *arg, const int key, int count){
 
 // --------------------------------------------------------------------------------
 
-/* count number of items in the counters to determine size of array in counters_rank */
+/* count number of items in the counters to determine size of array */
 static void
 count_docs(void *arg, const int key, int count){
   if (count > 0){ // only count an item if its score is not 0
@@ -444,5 +437,4 @@ insert_docs(void *arg, const int key, int count){ // args: array of structs, key
     index++; // update the index where the next item should be inserted (end of array)
     arraystruct->endindex = index;
   }
-
 }

@@ -13,8 +13,8 @@ echo ./querier ../libcs50/ $indexfile
 
 echo
 echo not a readable file
-echo ./indexer $pageDirectory notreadable
-./indexer $pageDirectory notreadable
+echo ./indexer $pageDirectory $pageDirectory
+./indexer $pageDirectory $pageDirectory
 
 # correct parameters, but queries with syntax errors ------------------
 
