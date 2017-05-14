@@ -112,63 +112,65 @@ querier(char *pageDirectory, char *indexFilename)
       char **words = count_malloc(possiblewords * sizeof(char *) + 1); // allocate memory for array of words, +1 to leave space for newline
       int wordCount = tokenize_query(query, words); // clean and parse query
 
-      if(wordCount > 0){      // if it was not a bad query print cleaned query
-        printf("Entered: ");
+      if(wordCount > 0){      // if it was not a bad query print cleaned query and continue
+        printf("Query: ");
         for (int k=0; k < wordCount; k++){ //testing: print array
           printf("%s ", words[k]);
         }
         printf("\n");
-      }
 
-      bool structureOk = validate_structure(words, wordCount); // validate basic structure of query
-      if (structureOk == true){ // only continue processing this query if structure is sound, otherwise wait for next query
+        bool structureOk = validate_structure(words, wordCount); // validate basic structure of query
+        if (structureOk == true){ // only continue processing this query if structure is sound, otherwise wait for next query
 
-        counters_t *queryDocs = satisfy_query(words, wordCount, index); // satisfy
+          counters_t *queryDocs = satisfy_query(words, wordCount, index); // satisfy
 
-        int numItems = 0; // will determine array size
-        counters_iterate(queryDocs, &numItems, count_docs); // count numItems
+          int numItems = 0; // will determine array size
+          counters_iterate(queryDocs, &numItems, count_docs); // count numItems
 
-        if (numItems == 0){
-          printf("No matching documents\n");
-        } else{   //------------ Rank documents by score ---------------
-          struct satisfyingdoc **rankedArray = count_malloc(numItems * sizeof(struct satisfyingdoc*)); // array of structs
-          struct rankingarray *arraystruct = count_malloc(sizeof(struct rankingarray));
-          arraystruct->array = rankedArray;
-          arraystruct->endindex = 0; // start inserting here
+          if (numItems == 0){
+            printf("No matching documents\n");
+          } else{   //------------ Rank documents by score ---------------
+            struct satisfyingdoc **rankedArray = count_malloc(numItems * sizeof(struct satisfyingdoc*)); // array of structs
+            struct rankingarray *arraystruct = count_malloc(sizeof(struct rankingarray));
+            arraystruct->array = rankedArray;
+            arraystruct->endindex = 0; // start inserting here
 
-          counters_iterate(queryDocs, arraystruct, insert_docs); // rank documents
+            counters_iterate(queryDocs, arraystruct, insert_docs); // rank documents
 
-          printf("Matches %d documents (ranked): \n", numItems);
-          for(int i=0; i<numItems; i++){
-            int score = rankedArray[i]->score; // http://stackoverflow.com/questions/18860123/invalid-type-argument-of©
-            int docID = rankedArray[i]->docID;
+            printf("Matches %d documents (ranked): \n", numItems);
+            for(int i=0; i<numItems; i++){
+              int score = rankedArray[i]->score; // http://stackoverflow.com/questions/18860123/invalid-type-argument-of©
+              int docID = rankedArray[i]->docID;
 
-            // make filename
-            char *idString = count_malloc(sizeof(char *));
-            sprintf(idString, "/%d", docID); // make id a string
-            size_t length = strlen(idString) + strlen(pageDirectory) + 1; // http://stackoverflow.com/questions/5614411/correct-way-to-malloc-space-for-a-string-and-then-insert-characters-into-that-sp
-            char *newfile = count_malloc(sizeof(char *) * length + 1);
-            strcpy(newfile, pageDirectory);
-            strcat(newfile, idString); // concatenate string https://www.tutorialspoint.com/c_standard_library/c_function_strcat.htm
+              // make filename
+              char *idString = count_malloc(sizeof(char *));
+              sprintf(idString, "/%d", docID); // make id a string
+              size_t length = strlen(idString) + strlen(pageDirectory) + 1; // http://stackoverflow.com/questions/5614411/correct-way-to-malloc-space-for-a-string-and-then-insert-characters-into-that-sp
+              char *newfile = count_malloc(sizeof(char *) * length + 1);
+              strcpy(newfile, pageDirectory);
+              strcat(newfile, idString); // concatenate string https://www.tutorialspoint.com/c_standard_library/c_function_strcat.htm
 
-            FILE *fp = fopen(newfile, "r");
-            char *url = readlinep(fp); // get URL
-            printf("score %d doc %d: %s", score, docID, url); // print out result
-            printf("\n");
+              FILE *fp = fopen(newfile, "r");
+              char *url = readlinep(fp); // get URL
+              printf("score %d doc %d: %s", score, docID, url); // print out result
+              printf("\n");
 
-            count_free(idString);
-            count_free(newfile);
-            count_free(url);
-            count_free(rankedArray[i]); // free the doc struct
+              count_free(idString);
+              count_free(newfile);
+              count_free(url);
+              count_free(rankedArray[i]); // free the doc struct
+            }
+
+            count_free(arraystruct);
+            count_free(rankedArray);
           }
-
-          count_free(arraystruct);
-          count_free(rankedArray);
+          printf("\n");
+          count_free(words); // free words array
+          counters_delete(queryDocs); // free counter
         }
-        printf("\n");
-        count_free(words); // free words array
-        counters_delete(queryDocs); // free counter
       }
+
+
 
     }
     count_free(query); // free readlinep
