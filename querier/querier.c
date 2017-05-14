@@ -101,9 +101,9 @@ static void
 querier(char *pageDirectory, char *indexFilename)
 {
   index_t *index = index_load(indexFilename); // load contents of indexfile into index data structure
+
   char *query;
   while((query = readlinep(stdin)) != NULL){   // read line, need to free this later
-
     if (blank_query(query) == false){ // proceed only if this query is not blank. if blank, ignore this query
 
       // calculate the max possible number of words (every character is separated by a space)
@@ -130,7 +130,7 @@ querier(char *pageDirectory, char *indexFilename)
         printf("No matching documents\n");
       } else{   //------------ Rank documents by score ---------------
         struct satisfyingdoc **rankedArray = count_malloc(numItems * sizeof(struct satisfyingdoc*)); // array of structs
-        struct rankingarray *arraystruct = count_malloc(sizeof(struct rankingarray*));
+        struct rankingarray *arraystruct = count_malloc(sizeof(struct rankingarray));
         arraystruct->array = rankedArray;
         arraystruct->endindex = 0; // start inserting here
 
@@ -153,13 +153,24 @@ querier(char *pageDirectory, char *indexFilename)
           char *url = readlinep(fp); // get URL
           printf("score %d doc %d: %s", score, docID, url); // print out result
           printf("\n");
-        }
-      }
 
+          count_free(idString);
+          count_free(newfile);
+          count_free(url);
+          count_free(rankedArray[i]); // free the doc struct
+        }
+
+        count_free(arraystruct);
+        count_free(rankedArray);
+      }
       printf("\n");
+      count_free(words); // free words array
+      counters_delete(queryDocs); // free counter
+
     }
+    count_free(query); // free readlinep
   }
-  //index_delete(index);   // clean up data structures
+  index_delete(index);   // clean up data structures
 }
 
 /* checks if the query is just whitespace, used in querier */
@@ -299,6 +310,8 @@ satisfy_query(char *words[], int wordCount, index_t *index){
     }
   }
   union_function(andseq, query);// union andseq with query
+  counters_delete(andseq);
+
   //counters_delete(andseq);  // delete the current andseq (so that if there is another one, we can start fresh)
   return query;
 }
@@ -314,6 +327,7 @@ union_function(counters_t *andsequence, counters_t *query){
   bothctrs->otherset = query;
   // iterate over the andsequence
   counters_iterate(andsequence, bothctrs, union_helper); // args: counters_t *ctrs, void * arg, itemfunc
+  count_free(bothctrs);
 }
 
 /* helper function used by union_function
@@ -339,6 +353,7 @@ satisfy_andseq(counters_t *andsequence, counters_t *word){
   bothctrs->otherset = word;
   // iterate over the andsequence
   counters_iterate(andsequence, bothctrs, intersection); // args: counters_t *ctrs, void * arg, itemfunc
+  count_free(bothctrs);
 }
 
 /* helper function used by satisfy_andseq
@@ -366,6 +381,7 @@ copy_ctrs(counters_t *andsequence, counters_t *word){
   bothctrs->otherset = word;
   // iterate over the andsequence
   counters_iterate(word, bothctrs, copy_ctrs_helper); // args: counters_t *ctrs, void * arg, itemfunc
+  count_free(bothctrs);
 }
 
 /* helper function used by copy_ctrs
