@@ -148,8 +148,8 @@ querier(char *pageDirectory, char *indexFilename)
         int score = rankedArray[i]->score; // http://stackoverflow.com/questions/18860123/invalid-type-argument-of©
         int docID = rankedArray[i]->docID;
 
-        printf("score: %d \n", score);
-        printf("docID: %d \n", docID);
+        printf("score: %d, docID: %d ", score, docID);
+
       }
   /*
       printf("\nranked documents: \n");
@@ -407,8 +407,10 @@ copy_ctrs_helper(void *arg, const int key, int count){
 /* count number of items in the counters to determine size of array in counters_rank */
 static void
 count_docs(void *arg, const int key, int count){
-  int *numItems = arg;
-  (*numItems)++;
+  if (count > 0){ // only count an item if its score is not 0
+    int *numItems = arg;
+    (*numItems)++;
+  }
 }
 
 /*use insertion sort so that array will be in decreasing order (based on score) */
@@ -416,36 +418,53 @@ void
 insert_docs(void *arg, const int key, int count){ // args: array of structs, key, count
   printf("inside insert_docs\n");
 
-  struct rankingarray *arraystruct = arg;
+  if (count > 0) {
+    struct rankingarray *arraystruct = arg;
 
-  struct satisfyingdoc *doc = count_malloc(sizeof(struct satisfyingdoc*)); // new
+    struct satisfyingdoc *doc = count_malloc(sizeof(struct satisfyingdoc*)); // new
 
-  arraystruct->doc = doc;  //new
-  //struct satisfyingdoc *doc = arraystruct->doc;
-  doc->docID = key;
-  doc->score = count;
+    arraystruct->doc = doc;  //new
+    //struct satisfyingdoc *doc = arraystruct->doc;
+    doc->docID = key;
+    doc->score = count;
 
-  printf("key: %d , score: %d\n ", key, count);
+    printf("key: %d , score: %d\n ", doc->docID, doc->score);
 
-  struct satisfyingdoc **array = arraystruct->array;
-  int index = arraystruct->endindex; // index starting point
-  int i = index; // make copy of index starting point
+    struct satisfyingdoc **array = arraystruct->array;
+    int index = arraystruct->endindex; // index starting point
+    int i = index; // make copy of index starting point
 
-  // insertion sort:
-  array[i] = doc; // insert at end
-  struct satisfyingdoc *temp = doc;   // make a struct that temporarily holds doc value during insertion
+    // insertion sort:
+    array[i] = doc; // insert at end
+    struct satisfyingdoc *temp = doc;   // make a struct that temporarily holds doc value during insertion
 
-  // repeatedly compare with item on its left until reach the beginning of array or inserted:
-  while (i > 0){
-    if(array[i]->score > array[i-1]->score){ // current item's score is greater than score of item on its left
+    // repeatedly compare with item on its left until reach the beginning of array or inserted:
+    while (i > 0 && (temp->score > array[i-1]->score)){ // current item's score is greater than score of item on its left
+      printf("temp score: %d \n", temp->score);
+      printf("left score: array %d \n", array[i-1]->score);
+
       array[i] = array[i-1]; // slide over left item to current spot
-    } else{ // current item's score is less than one on its left
-      array[i] = temp; // insert item
+      i--; // update index: go left
     }
-    i--;
+    array[i] = temp; // insert item: current item's score is less than one on its left or reached index 0
+
+/*
+    while (i > 0 && ){
+      printf("temp score: %d \n", temp->score);
+      printf("left score: array %d \n", array[i-1]->score)
+
+      if(temp->score > array[i-1]->score){ // current item's score is greater than score of item on its left
+        array[i] = array[i-1]; // slide over left item to current spot
+      } else{ // current item's score is less than one on its left
+        array[i] = temp; // insert item
+      }
+      i--;
+    }
+    */
+
+    printf("index: %d\n\n",index);
+    index++; // update the index where the next item should be inserted (end of array)
+    arraystruct->endindex = index;
   }
 
-  printf("index: %d\n",index);
-  index++; // update the index where the next item should be inserted (end of array)
-  arraystruct->endindex = index;
 }
