@@ -213,3 +213,9 @@ index_load(char *indexFilename)
   return index;
 
 }
+
+/**************** index_ht() ****************/
+hashtable_t *
+index_ht(index_t *index){
+  return index->ht; 
+}

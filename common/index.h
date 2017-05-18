@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include "hashtable.h"
 
 /**************** global types ****************/
 typedef struct index index_t;  // opaque to users of the module
@@ -32,5 +33,7 @@ void index_delete(index_t *index);
 /* load contents of index file into index data structure */
 index_t *index_load(char *indexFilename);
 
+/* return hashtable - used by querier */
+hashtable_t *index_ht(index_t *index);
 
 #endif // __index_H
