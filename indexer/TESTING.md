@@ -1,4 +1,4 @@
-# CS50 Tiny Search Engine (TSE) Crawler Testing Documentation
+# CS50 Tiny Search Engine (TSE) Indexer Testing Documentation
 
 Savannah Liu, May 2017.
 
@@ -10,7 +10,7 @@ results of the testing.
 
 ## Makefile
 
-We wrote a phony rule `test` in the Makefile. It depends on `indexer`, `indextest`, and `indextest.sh`. It simply executes `crawlertest.sh`.
+We wrote a phony rule `test` in the Makefile. It depends on `indexer`, `indextest`, and `indextest.sh`. It simply executes `indextest.sh`.
 
 We wrote a phony rule `valgrind` in the Makefile. It depends on `indexer`. It runs a single test of `indexer` so we can look for memory errors or leaks.
 
